@@ -22,9 +22,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
           headers: { 'content-type': 'application/json' }
         });
       }
-      const loginUrl = new URL('/admin/login', context.url);
-      loginUrl.searchParams.set('next', path);
-      return context.redirect(loginUrl.toString());
+      const params = new URLSearchParams({ next: path });
+      return context.redirect(`/admin/login?${params.toString()}`);
     }
     if (session.user.role !== 'admin') {
       // Logged in but not admin — kick them to their guest account
