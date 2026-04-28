@@ -229,7 +229,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm border-b-2 -mb-px ${tab === k ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-500 hover:text-stone-900'}`}
+            className={`px-4 py-2 text-sm border-b-2 -mb-px cursor-pointer ${tab === k ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-500 hover:text-stone-900'}`}
           >
             {l}
           </button>
@@ -304,7 +304,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                 <button
                   key={l}
                   onClick={() => setActiveLocale(l)}
-                  className={`px-3 py-1 text-xs rounded ${activeLocale === l ? 'bg-stone-900 text-white' : 'bg-stone-200 text-stone-700'}`}
+                  className={`px-3 py-1 text-xs rounded cursor-pointer ${activeLocale === l ? 'bg-stone-900 text-white' : 'bg-stone-200 text-stone-700'}`}
                 >
                   {l.toUpperCase()}
                 </button>
@@ -348,7 +348,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
               <label className={label}>Texto alternativo</label>
               <input className={input} value={photoAlt} onChange={(e) => setPhotoAlt(e.target.value)} />
             </div>
-            <button onClick={addPhoto} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">Adicionar</button>
+            <button onClick={addPhoto} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm cursor-pointer hover:bg-stone-800 transition">Adicionar</button>
           </div>
           <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {photos.map((p, i) => (
@@ -357,9 +357,9 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                 <div className="p-2 text-xs text-stone-600 flex items-center justify-between">
                   <span>#{i + 1}</span>
                   <div className="flex gap-1">
-                    <button onClick={() => move(p.id, -1)} className="px-2">↑</button>
-                    <button onClick={() => move(p.id, 1)} className="px-2">↓</button>
-                    <button onClick={() => removePhoto(p.id)} className="px-2 text-red-600">✕</button>
+                    <button onClick={() => move(p.id, -1)} className="px-2 cursor-pointer hover:text-stone-900">↑</button>
+                    <button onClick={() => move(p.id, 1)} className="px-2 cursor-pointer hover:text-stone-900">↓</button>
+                    <button onClick={() => removePhoto(p.id)} className="px-2 text-red-600 cursor-pointer hover:text-red-700">✕</button>
                   </div>
                 </div>
               </li>
@@ -384,7 +384,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                         return next;
                       })
                     }
-                    className={`w-full text-left px-3 py-2 rounded-md border text-sm ${active ? 'bg-stone-900 text-white border-stone-900' : 'bg-white border-stone-200 hover:bg-stone-50'}`}
+                    className={`w-full text-left px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors ${active ? 'bg-stone-900 text-white border-stone-900 hover:bg-stone-800' : 'bg-white border-stone-200 hover:bg-stone-50 hover:border-stone-300'}`}
                   >
                     {a.label}
                   </button>
@@ -392,7 +392,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
               );
             })}
           </ul>
-          <button onClick={saveAmenities} disabled={saving} className="mt-4 rounded-md bg-stone-900 text-white px-4 py-2 text-sm">
+          <button onClick={saveAmenities} disabled={saving} className="mt-4 rounded-md bg-stone-900 text-white px-4 py-2 text-sm cursor-pointer hover:bg-stone-800 transition disabled:opacity-60 disabled:cursor-wait">
             {saving ? '…' : 'Guardar comodidades'}
           </button>
         </div>
@@ -413,7 +413,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
 
       {tab !== 'amenities' && (
         <div className="pt-4 border-t border-stone-200">
-          <button onClick={save} disabled={saving} className="rounded-md bg-stone-900 text-white px-5 py-2 text-sm font-medium">
+          <button onClick={save} disabled={saving} className="rounded-md bg-stone-900 text-white px-5 py-2 text-sm font-medium cursor-pointer hover:bg-stone-800 transition disabled:opacity-60 disabled:cursor-wait">
             {saving ? 'A guardar…' : 'Guardar'}
           </button>
         </div>

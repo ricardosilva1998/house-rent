@@ -19,12 +19,23 @@ interface Booking {
 }
 
 const STATUSES = [
-  { v: '', l: 'Todos' },
+  { v: '', l: 'Todos os estados' },
   { v: 'confirmed', l: 'Confirmadas' },
-  { v: 'cancelled', l: 'Canceladas' },
   { v: 'completed', l: 'Concluídas' },
+  { v: 'cancelled', l: 'Canceladas' },
   { v: 'no_show', l: 'Não-comparência' }
 ];
+
+const fmtDate = (iso: string) => {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y!.slice(2)}`;
+};
+
+const nights = (checkIn: string, checkOut: string) => {
+  const a = new Date(checkIn + 'T00:00:00Z').getTime();
+  const b = new Date(checkOut + 'T00:00:00Z').getTime();
+  return Math.round((b - a) / (24 * 3600 * 1000));
+};
 
 export default function BookingsManager() {
   const [items, setItems] = useState<Booking[]>([]);
@@ -55,10 +66,7 @@ export default function BookingsManager() {
     if (json.ok) setItems(json.bookings);
     setLoading(false);
   }
-
-  useEffect(() => {
-    load();
-  }, [status, search]);
+  useEffect(() => { load(); }, [status, search]);
 
   async function patch(id: string, body: any) {
     const res = await fetch(`/api/admin/bookings/${id}`, {
@@ -75,10 +83,7 @@ export default function BookingsManager() {
     setCreating(true);
     setCreateError(null);
     try {
-      const body: any = {
-        ...form,
-        numGuests: Number(form.numGuests)
-      };
+      const body: any = { ...form, numGuests: Number(form.numGuests) };
       if (form.override_price) body.override_price = Number(form.override_price);
       const res = await fetch('/api/admin/bookings', {
         method: 'POST',
@@ -87,143 +92,180 @@ export default function BookingsManager() {
       });
       const j = await res.json();
       if (!res.ok || !j.ok) {
-        setCreateError(j.error ?? 'erro');
+        setCreateError(j.error === 'dates_taken' ? 'Datas indisponíveis' : (j.error ?? 'erro'));
         return;
       }
       setShowCreate(false);
       setForm({ email: '', name: '', checkIn: '', checkOut: '', numGuests: 2, source: 'admin', specialRequests: '', override_price: '' });
       load();
-    } finally {
-      setCreating(false);
-    }
+    } finally { setCreating(false); }
   }
 
-  const input = 'w-full rounded-md border border-stone-300 px-3 py-2 text-sm';
-
   return (
-    <div>
-      <div className="flex flex-wrap gap-3 mb-4 items-end">
-        <div>
-          <label className="block text-xs text-stone-500 mb-1">Estado</label>
-          <select className={input + ' w-44'} value={status} onChange={(e) => setStatus(e.target.value)}>
-            {STATUSES.map((s) => (
-              <option key={s.v} value={s.v}>
-                {s.l}
-              </option>
-            ))}
-          </select>
+    <div className="space-y-5">
+      {/* Filter / search bar */}
+      <div className="admin-card">
+        <div className="p-4 flex flex-wrap gap-3 items-end">
+          <div className="w-48">
+            <label className="admin-label">Estado</label>
+            <select className="admin-select cursor-pointer" value={status} onChange={(e) => setStatus(e.target.value)}>
+              {STATUSES.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[220px]">
+            <label className="admin-label">Pesquisar</label>
+            <input
+              className="admin-input"
+              placeholder="Código, email, nome…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-action cursor-pointer">
+            {showCreate ? 'Cancelar' : '+ Nova reserva'}
+          </button>
         </div>
-        <div className="flex-1 min-w-[180px]">
-          <label className="block text-xs text-stone-500 mb-1">Pesquisa (código, email, nome)</label>
-          <input className={input} value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm"
-        >
-          + Nova reserva
-        </button>
+
+        {showCreate && (
+          <form onSubmit={create} className="px-4 pb-5 pt-1 grid md:grid-cols-3 gap-3" style={{ borderTop: '1px solid var(--rule)' }}>
+            <div className="md:col-span-2">
+              <label className="admin-label">Email do hóspede</label>
+              <input className="admin-input" required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Nome</label>
+              <input className="admin-input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Check-in</label>
+              <input className="admin-input" required type="date" value={form.checkIn} onChange={(e) => setForm({ ...form, checkIn: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Check-out</label>
+              <input className="admin-input" required type="date" value={form.checkOut} onChange={(e) => setForm({ ...form, checkOut: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Hóspedes</label>
+              <input className="admin-input" required type="number" min={1} value={form.numGuests} onChange={(e) => setForm({ ...form, numGuests: Number(e.target.value) })} />
+            </div>
+            <div>
+              <label className="admin-label">Origem</label>
+              <input className="admin-input" placeholder="admin / direct / airbnb" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="admin-label">Pedidos especiais</label>
+              <input className="admin-input" value={form.specialRequests} onChange={(e) => setForm({ ...form, specialRequests: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Preço total (override)</label>
+              <input className="admin-input" type="number" step="0.01" placeholder="auto" value={form.override_price} onChange={(e) => setForm({ ...form, override_price: e.target.value })} />
+            </div>
+            {createError && (
+              <p className="md:col-span-3 dateline" style={{ color: 'var(--color-ember-600)' }}>{createError}</p>
+            )}
+            <div className="md:col-span-3 flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowCreate(false)} className="btn-action cursor-pointer">Cancelar</button>
+              <button type="submit" disabled={creating} className="btn-action cursor-pointer" style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}>
+                {creating ? 'A criar…' : 'Criar reserva →'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
-      {showCreate && (
-        <form onSubmit={create} className="rounded-lg border border-stone-200 bg-white p-4 mb-6 grid md:grid-cols-3 gap-3">
-          <input className={input} required type="email" placeholder="Email do hóspede" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <input className={input} required placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className={input} required type="number" min={1} placeholder="Hóspedes" value={form.numGuests} onChange={(e) => setForm({ ...form, numGuests: Number(e.target.value) })} />
-          <input className={input} required type="date" value={form.checkIn} onChange={(e) => setForm({ ...form, checkIn: e.target.value })} />
-          <input className={input} required type="date" value={form.checkOut} onChange={(e) => setForm({ ...form, checkOut: e.target.value })} />
-          <input className={input} placeholder="Origem (admin / direct / airbnb)" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} />
-          <input className={input + ' md:col-span-2'} placeholder="Pedidos especiais" value={form.specialRequests} onChange={(e) => setForm({ ...form, specialRequests: e.target.value })} />
-          <input className={input} type="number" step="0.01" placeholder="Preço total (override)" value={form.override_price} onChange={(e) => setForm({ ...form, override_price: e.target.value })} />
-          {createError && <p className="md:col-span-3 text-sm text-red-600">{createError === 'dates_taken' ? 'Datas indisponíveis' : createError}</p>}
-          <div className="md:col-span-3 flex gap-2 justify-end">
-            <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 text-sm">Cancelar</button>
-            <button type="submit" disabled={creating} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">{creating ? '…' : 'Criar'}</button>
-          </div>
-        </form>
-      )}
-
-      <section className="rounded-lg border border-stone-200 bg-white">
+      {/* Table */}
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h2 className="admin-card-title">Reservas {loading ? '' : `· ${items.length}`}</h2>
+          <p className="serial" style={{ color: 'var(--ink-faint)' }}>{status ? STATUSES.find((s) => s.v === status)?.l : 'todas'}</p>
+        </div>
         {loading ? (
-          <p className="p-4 text-sm text-stone-500">A carregar…</p>
+          <div className="admin-empty">A carregar…</div>
         ) : items.length === 0 ? (
-          <p className="p-4 text-sm text-stone-500">Sem reservas.</p>
+          <div className="admin-empty">Sem reservas.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-stone-500 border-b border-stone-100">
-              <tr>
-                <th className="px-3 py-2">Código</th>
-                <th>Hóspede</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
-                <th>Pax</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th>Pagamento</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((b) => (
-                <tr key={b.id} className="border-t border-stone-100">
-                  <td className="px-3 py-2 font-mono text-stone-600">{b.confirmationCode}</td>
-                  <td>
-                    <div>{b.userName ?? '—'}</div>
-                    <div className="text-xs text-stone-500">{b.userEmail}</div>
-                  </td>
-                  <td>{b.checkIn}</td>
-                  <td>{b.checkOut}</td>
-                  <td>{b.numGuests}</td>
-                  <td>{b.quotedPrice.toFixed(2)} {b.currency}</td>
-                  <td>
-                    <span className={[
-                      'px-2 py-0.5 rounded text-xs',
-                      b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                      b.status === 'cancelled' ? 'bg-stone-200 text-stone-600' :
-                      b.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      'bg-amber-100 text-amber-800'
-                    ].join(' ')}>{b.status}</span>
-                  </td>
-                  <td className="text-xs text-stone-600">
-                    {b.paymentStatus ?? '—'}
-                    {b.paidAmount != null ? ` (${b.paidAmount.toFixed(2)})` : ''}
-                  </td>
-                  <td className="px-3 py-2 text-right space-x-1 whitespace-nowrap">
-                    <a target="_blank" rel="noopener" href={`/api/bookings/${b.id}/voucher`} className="text-xs underline text-stone-700">PDF</a>
-                    {b.status === 'confirmed' && (
-                      <>
-                        <button onClick={() => patch(b.id, { status: 'completed' })} className="text-xs underline text-stone-700">✔ Concluir</button>
-                        <button onClick={() => patch(b.id, { status: 'no_show' })} className="text-xs underline text-amber-700">No-show</button>
-                        <button
-                          onClick={() => {
-                            const reason = prompt('Motivo do cancelamento') ?? 'admin_cancelled';
-                            patch(b.id, { status: 'cancelled', cancelledReason: reason });
-                          }}
-                          className="text-xs underline text-red-600"
-                        >
-                          Cancelar
-                        </button>
-                      </>
-                    )}
-                    {b.paymentStatus !== 'paid' && b.status !== 'cancelled' && (
-                      <button
-                        onClick={() => {
-                          const v = prompt(`Valor pago (${b.currency})`, String(b.quotedPrice));
-                          if (!v) return;
-                          patch(b.id, { paymentStatus: 'paid', paidAmount: Number(v) });
-                        }}
-                        className="text-xs underline text-emerald-700"
-                      >
-                        Marcar pago
-                      </button>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Hóspede</th>
+                  <th>Datas</th>
+                  <th className="right">Pax</th>
+                  <th className="right">Total</th>
+                  <th>Estado</th>
+                  <th>Pagamento</th>
+                  <th>Origem</th>
+                  <th className="right">Acções</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((b) => (
+                  <tr key={b.id}>
+                    <td className="num" style={{ color: 'var(--ink)' }}>{b.confirmationCode}</td>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>{b.userName ?? '—'}</div>
+                      <div className="meta">{b.userEmail}</div>
+                    </td>
+                    <td>
+                      <div className="num">{fmtDate(b.checkIn)} → {fmtDate(b.checkOut)}</div>
+                      <div className="meta">{nights(b.checkIn, b.checkOut)} noites</div>
+                    </td>
+                    <td className="right num">{b.numGuests}</td>
+                    <td className="right num" style={{ fontWeight: 500 }}>
+                      {b.quotedPrice.toFixed(0)} <span className="meta">{b.currency}</span>
+                    </td>
+                    <td>
+                      <span className={`chip chip-${b.status}`}>{b.status.replace('_', ' ')}</span>
+                    </td>
+                    <td>
+                      {b.paymentStatus ? (
+                        <span className={`chip chip-${b.paymentStatus}`}>
+                          {b.paymentStatus}
+                          {b.paidAmount != null ? ` · ${b.paidAmount.toFixed(0)}` : ''}
+                        </span>
+                      ) : <span className="meta">—</span>}
+                    </td>
+                    <td className="meta">{b.source}</td>
+                    <td className="right">
+                      <div className="inline-flex gap-1.5 flex-wrap justify-end">
+                        <a target="_blank" rel="noopener" href={`/api/bookings/${b.id}/voucher`} className="btn-action cursor-pointer">PDF</a>
+                        {b.status === 'confirmed' && (
+                          <>
+                            <button onClick={() => patch(b.id, { status: 'completed' })} className="btn-action cursor-pointer">Concluir</button>
+                            <button onClick={() => patch(b.id, { status: 'no_show' })} className="btn-action btn-action-danger cursor-pointer">No-show</button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Motivo do cancelamento') ?? 'admin_cancelled';
+                                patch(b.id, { status: 'cancelled', cancelledReason: reason });
+                              }}
+                              className="btn-action btn-action-danger cursor-pointer"
+                            >
+                              Cancelar
+                            </button>
+                          </>
+                        )}
+                        {b.paymentStatus !== 'paid' && b.status !== 'cancelled' && (
+                          <button
+                            onClick={() => {
+                              const v = prompt(`Valor pago (${b.currency})`, String(b.quotedPrice));
+                              if (!v) return;
+                              patch(b.id, { paymentStatus: 'paid', paidAmount: Number(v) });
+                            }}
+                            className="btn-action cursor-pointer"
+                          >
+                            Marcar pago
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }
