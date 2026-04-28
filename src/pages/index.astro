@@ -1,0 +1,88 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { createT, type Locale, pathInLocale } from '../i18n/use-translation';
+import { getDefaultProperty, getPropertyPhotos, getAllAmenities, getPropertyAmenityIds } from '../lib/property';
+import { db } from '../db/client';
+import { propertyTranslations } from '../db/schema';
+import { eq, and } from 'drizzle-orm';
+
+const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
+const t = createT(locale);
+const property = await getDefaultProperty();
+const photos = property ? await getPropertyPhotos(property.id) : [];
+const amenitiesAll = await getAllAmenities(locale);
+const selected = property ? await getPropertyAmenityIds(property.id) : new Set<string>();
+const amenitiesActive = amenitiesAll.filter((a) => selected.has(a.id));
+const trRows = property
+  ? await db
+      .select()
+      .from(propertyTranslations)
+      .where(and(eq(propertyTranslations.propertyId, property.id), eq(propertyTranslations.locale, locale)))
+  : [];
+const tr = trRows[0];
+const heroPhoto = photos[0];
+---
+<SiteLayout title={t('site.tagline')}>
+  <section class="relative">
+    {heroPhoto ? (
+      <div class="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
+        <img src={heroPhoto.url} alt={heroPhoto.altText ?? property?.name ?? ''} class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/60" />
+        <div class="relative max-w-6xl mx-auto px-4 h-full flex flex-col justify-end pb-12 text-white">
+          <h1 class="text-4xl md:text-5xl font-semibold tracking-tight">
+            {property?.name ?? t('site.name')}
+          </h1>
+          <p class="mt-3 text-lg text-stone-100/90 max-w-xl">
+            {tr?.tagline ?? t('site.tagline')}
+          </p>
+          <div class="mt-6">
+            <a href={pathInLocale('/reservar', locale)} class="inline-block px-5 py-3 rounded-md bg-white text-stone-900 font-medium hover:bg-stone-100">
+              {t('home.hero_cta')}
+            </a>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div class="bg-stone-200 h-72 flex items-center justify-center text-stone-500">
+        Adicione fotos no painel de admin
+      </div>
+    )}
+  </section>
+
+  <section class="max-w-3xl mx-auto px-4 py-12">
+    <h2 class="text-2xl font-semibold mb-3">{t('home.intro_title')}</h2>
+    <p class="text-stone-700 leading-relaxed whitespace-pre-line">
+      {tr?.description ?? t('home.intro_body')}
+    </p>
+  </section>
+
+  {amenitiesActive.length > 0 && (
+    <section class="max-w-5xl mx-auto px-4 py-8">
+      <h2 class="text-xl font-semibold mb-4">{t('home.amenities_title')}</h2>
+      <ul class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
+        {amenitiesActive.map((a) => (
+          <li class="rounded-md border border-stone-200 bg-white px-3 py-2">{a.label}</li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {photos.length > 1 && (
+    <section class="max-w-6xl mx-auto px-4 py-12">
+      <ul class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {photos.slice(1, 7).map((p) => (
+          <li class="aspect-[4/3] rounded-md overflow-hidden bg-stone-200">
+            <img src={p.url} alt={p.altText ?? ''} class="w-full h-full object-cover" />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {property?.houseRules && (
+    <section class="max-w-3xl mx-auto px-4 py-8">
+      <h2 class="text-xl font-semibold mb-3">{t('home.rules_title')}</h2>
+      <p class="text-stone-700 whitespace-pre-line text-sm">{property.houseRules}</p>
+    </section>
+  )}
+</SiteLayout>

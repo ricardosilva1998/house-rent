@@ -1,0 +1,64 @@
+{
+  "site": {
+    "name": "Retiro dos Baeta",
+    "tagline": "A sua casa de campo, à medida da sua estadia."
+  },
+  "nav": {
+    "home": "Início",
+    "house": "A Casa",
+    "book": "Reservar",
+    "account": "Conta",
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Registar"
+  },
+  "home": {
+    "hero_cta": "Ver disponibilidade",
+    "intro_title": "Bem-vindo ao Retiro dos Baeta",
+    "intro_body": "Uma casa para descansar, com calma e privacidade.",
+    "amenities_title": "Comodidades",
+    "rules_title": "Regras da casa"
+  },
+  "booking": {
+    "select_dates": "Escolha as datas",
+    "check_in": "Entrada",
+    "check_out": "Saída",
+    "guests": "Hóspedes",
+    "min_stay": "Estadia mínima de {nights} noites",
+    "nights": "{n, plural, one {# noite} other {# noites}}",
+    "total": "Total",
+    "confirm": "Confirmar reserva",
+    "no_dates": "Selecione duas datas",
+    "unavailable": "Datas indisponíveis"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Palavra-passe",
+    "name": "Nome",
+    "phone": "Telefone",
+    "country": "País",
+    "login_title": "Entrar",
+    "login_submit": "Entrar",
+    "register_title": "Criar conta",
+    "register_submit": "Registar",
+    "verify_title": "Confirme o seu email",
+    "verify_body": "Enviámos-lhe um link de confirmação. Confirme para começar a reservar.",
+    "forgot": "Esqueci-me da palavra-passe",
+    "logout": "Sair"
+  },
+  "account": {
+    "title": "A minha conta",
+    "upcoming": "Próximas reservas",
+    "past": "Reservas passadas",
+    "profile": "Perfil",
+    "voucher": "Voucher",
+    "cancel": "Cancelar"
+  },
+  "errors": {
+    "generic": "Ocorreu um erro. Tente novamente.",
+    "invalid_credentials": "Credenciais inválidas",
+    "email_exists": "Este email já está registado",
+    "email_not_verified": "Confirme o seu email primeiro",
+    "dates_taken": "Estas datas deixaram de estar disponíveis"
+  }
+}

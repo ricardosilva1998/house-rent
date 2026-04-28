@@ -1,0 +1,77 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { db } from '../../db/client';
+import { bookings, properties, users } from '../../db/schema';
+import { count, sql, and, eq, gte } from 'drizzle-orm';
+
+const now = new Date();
+const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 3600 * 1000);
+const today = now.toISOString().slice(0, 10);
+
+const [{ totalBookings = 0 } = { totalBookings: 0 }] = await db
+  .select({ totalBookings: count() })
+  .from(bookings)
+  .where(eq(bookings.status, 'confirmed'));
+
+const [{ guestCount = 0 } = { guestCount: 0 }] = await db
+  .select({ guestCount: count() })
+  .from(users)
+  .where(eq(users.role, 'guest'));
+
+const upcoming = await db
+  .select()
+  .from(bookings)
+  .where(and(eq(bookings.status, 'confirmed'), gte(bookings.checkIn, today)))
+  .orderBy(bookings.checkIn)
+  .limit(8);
+
+const props = await db.select().from(properties).limit(1);
+const property = props[0];
+---
+<AdminLayout title="Dashboard">
+  <div class="grid gap-4 md:grid-cols-3 mb-6">
+    <article class="rounded-lg bg-white border border-stone-200 p-5">
+      <p class="text-sm text-stone-500">Reservas confirmadas</p>
+      <p class="text-3xl font-semibold mt-1">{totalBookings}</p>
+    </article>
+    <article class="rounded-lg bg-white border border-stone-200 p-5">
+      <p class="text-sm text-stone-500">Hóspedes registados</p>
+      <p class="text-3xl font-semibold mt-1">{guestCount}</p>
+    </article>
+    <article class="rounded-lg bg-white border border-stone-200 p-5">
+      <p class="text-sm text-stone-500">Casa</p>
+      <p class="text-lg font-medium mt-1">{property?.name ?? '—'}</p>
+      <p class="text-sm text-stone-500">{property ? `${property.maxGuests} hóspedes · ${property.bedrooms} quartos` : 'Configure em Casa'}</p>
+    </article>
+  </div>
+
+  <section class="rounded-lg bg-white border border-stone-200 p-5">
+    <h2 class="font-medium mb-3">Próximas reservas</h2>
+    {upcoming.length === 0 ? (
+      <p class="text-stone-500 text-sm">Sem reservas futuras.</p>
+    ) : (
+      <table class="w-full text-sm">
+        <thead class="text-left text-stone-500">
+          <tr>
+            <th class="py-2">Código</th>
+            <th>Check-in</th>
+            <th>Check-out</th>
+            <th>Hóspedes</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {upcoming.map((b) => (
+            <tr class="border-t border-stone-100">
+              <td class="py-2 font-mono text-stone-600">{b.confirmationCode}</td>
+              <td>{b.checkIn}</td>
+              <td>{b.checkOut}</td>
+              <td>{b.numGuests}</td>
+              <td class="text-right">{b.quotedPrice.toFixed(2)} {b.currency}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </section>
+</AdminLayout>

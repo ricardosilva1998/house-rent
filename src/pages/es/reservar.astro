@@ -1,0 +1,14 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { createT, type Locale, pathInLocale } from '../../i18n/use-translation';
+
+const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
+const t = createT(locale);
+---
+<SiteLayout title={t('nav.book')}>
+  <section class="max-w-2xl mx-auto px-4 py-16 text-center">
+    <h1 class="text-2xl font-semibold mb-4">{t('booking.select_dates')}</h1>
+    <p class="text-stone-600 mb-6">Em construção · disponível em breve</p>
+    <a href={pathInLocale('/casa', locale)} class="text-stone-700 underline">← {t('nav.house')}</a>
+  </section>
+</SiteLayout>

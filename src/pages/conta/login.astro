@@ -1,0 +1,41 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import AuthForms from '../../components/islands/AuthForms.tsx';
+import { createT, type Locale, pathInLocale } from '../../i18n/use-translation';
+
+if (Astro.locals.user) return Astro.redirect(pathInLocale('/conta', Astro.locals.locale));
+
+const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
+const t = createT(locale);
+const next = Astro.url.searchParams.get('next') ?? undefined;
+---
+<SiteLayout title={t('auth.login_title')}>
+  <section class="max-w-md mx-auto px-4 py-12">
+    <h1 class="text-2xl font-semibold mb-6">{t('auth.login_title')}</h1>
+    <AuthForms
+      client:load
+      mode="login"
+      next={next}
+      labels={{
+        email: t('auth.email'),
+        password: t('auth.password'),
+        name: t('auth.name'),
+        phone: t('auth.phone'),
+        country: t('auth.country'),
+        submit: t('auth.login_submit'),
+        forgot: t('auth.forgot'),
+        new_password: t('auth.password'),
+        error_invalid_credentials: t('errors.invalid_credentials'),
+        error_email_exists: t('errors.email_exists'),
+        error_generic: t('errors.generic'),
+        success_check_email: t('auth.verify_body'),
+        success_password_reset: 'OK'
+      }}
+    />
+    <p class="mt-6 text-sm text-stone-600">
+      <a href={pathInLocale('/conta/registar', locale)} class="underline">{t('auth.register_title')}</a>
+      {' · '}
+      <a href={pathInLocale('/conta/recuperar', locale)} class="underline">{t('auth.forgot')}</a>
+    </p>
+  </section>
+</SiteLayout>

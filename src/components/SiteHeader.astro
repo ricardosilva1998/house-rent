@@ -1,0 +1,49 @@
+---
+import { createT, type Locale, locales, pathInLocale } from '../i18n/use-translation';
+
+const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
+const t = createT(locale);
+const user = Astro.locals.user;
+const path = Astro.url.pathname;
+const stripLocale = (p: string) => {
+  const parts = p.split('/').filter(Boolean);
+  if (parts[0] && (locales as readonly string[]).includes(parts[0])) parts.shift();
+  return '/' + parts.join('/');
+};
+const naked = stripLocale(path);
+---
+<header class="border-b border-stone-200 bg-white/80 backdrop-blur sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
+    <a href={pathInLocale('/', locale)} class="font-semibold text-lg tracking-tight">
+      {t('site.name')}
+    </a>
+    <nav class="hidden md:flex items-center gap-5 text-sm text-stone-700">
+      <a href={pathInLocale('/casa', locale)} class="hover:text-stone-900">{t('nav.house')}</a>
+      <a href={pathInLocale('/reservar', locale)} class="hover:text-stone-900">{t('nav.book')}</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-3 text-sm">
+      <div class="flex items-center gap-1 text-stone-500">
+        {locales.map((l) => (
+          <a
+            href={pathInLocale(naked === '/' ? '/' : naked, l)}
+            class={`px-2 py-1 rounded ${l === locale ? 'bg-stone-900 text-white' : 'hover:bg-stone-100'}`}
+          >
+            {l.toUpperCase()}
+          </a>
+        ))}
+      </div>
+      {user ? (
+        <a href={pathInLocale('/conta', locale)} class="font-medium hover:underline">
+          {user.name.split(' ')[0]}
+        </a>
+      ) : (
+        <a href={pathInLocale('/conta/login', locale)} class="font-medium hover:underline">
+          {t('nav.login')}
+        </a>
+      )}
+      {user?.role === 'admin' && (
+        <a href="/admin" class="px-3 py-1 rounded-md bg-stone-900 text-white">Admin</a>
+      )}
+    </div>
+  </div>
+</header>

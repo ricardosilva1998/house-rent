@@ -1,0 +1,64 @@
+{
+  "site": {
+    "name": "Retiro dos Baeta",
+    "tagline": "Your countryside home, on your terms."
+  },
+  "nav": {
+    "home": "Home",
+    "house": "The House",
+    "book": "Book",
+    "account": "Account",
+    "login": "Log in",
+    "logout": "Log out",
+    "register": "Sign up"
+  },
+  "home": {
+    "hero_cta": "Check availability",
+    "intro_title": "Welcome to Retiro dos Baeta",
+    "intro_body": "A house for slow, private getaways.",
+    "amenities_title": "Amenities",
+    "rules_title": "House rules"
+  },
+  "booking": {
+    "select_dates": "Pick your dates",
+    "check_in": "Check-in",
+    "check_out": "Check-out",
+    "guests": "Guests",
+    "min_stay": "Minimum stay of {nights} nights",
+    "nights": "{n, plural, one {# night} other {# nights}}",
+    "total": "Total",
+    "confirm": "Confirm booking",
+    "no_dates": "Select two dates",
+    "unavailable": "Dates unavailable"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "phone": "Phone",
+    "country": "Country",
+    "login_title": "Log in",
+    "login_submit": "Log in",
+    "register_title": "Create account",
+    "register_submit": "Sign up",
+    "verify_title": "Verify your email",
+    "verify_body": "We sent you a verification link. Confirm it to start booking.",
+    "forgot": "Forgot your password",
+    "logout": "Log out"
+  },
+  "account": {
+    "title": "My account",
+    "upcoming": "Upcoming bookings",
+    "past": "Past bookings",
+    "profile": "Profile",
+    "voucher": "Voucher",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "generic": "Something went wrong. Try again.",
+    "invalid_credentials": "Invalid credentials",
+    "email_exists": "This email is already registered",
+    "email_not_verified": "Verify your email first",
+    "dates_taken": "These dates are no longer available"
+  }
+}
