@@ -50,7 +50,7 @@ const monthName = (iso: string, locale = 'pt-PT') =>
 const startOfMonthGrid = (iso: string) => {
   const d = new Date(iso + 'T00:00:00Z');
   d.setUTCDate(1);
-  const dow = (d.getUTCDay() + 6) % 7; // Monday = 0
+  const dow = (d.getUTCDay() + 6) % 7;
   d.setUTCDate(1 - dow);
   return d.toISOString().slice(0, 10);
 };
@@ -80,7 +80,6 @@ export default function BookingFlow({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ confirmationCode: string } | null>(null);
 
-  // Load 90-day availability window
   useEffect(() => {
     (async () => {
       const from = todayIso();
@@ -91,7 +90,6 @@ export default function BookingFlow({
     })();
   }, []);
 
-  // Fetch quote when range changes
   useEffect(() => {
     if (!checkIn || !checkOut) {
       setQuote(null);
@@ -130,7 +128,6 @@ export default function BookingFlow({
       setCheckOut(null);
       return;
     }
-    // Validate that no taken date falls between checkIn and date
     let cursor = checkIn;
     while (cursor < date) {
       cursor = addDays(cursor, 1);
@@ -167,7 +164,6 @@ export default function BookingFlow({
       if (!res.ok || !j.ok) {
         setError(j.error ?? 'generic');
         if (j.error === 'dates_taken') {
-          // refresh availability
           const r = await fetch(`/api/availability?from=${todayIso()}&to=${addDays(todayIso(), 365)}`);
           const a = await r.json();
           if (a.ok) setTaken(new Set(a.takenDates));
@@ -182,43 +178,58 @@ export default function BookingFlow({
 
   if (success) {
     return (
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center">
-        <h2 className="text-xl font-semibold text-emerald-900">✔ {labels.confirm}</h2>
-        <p className="mt-2 text-emerald-900">
-          {checkIn} → {checkOut}
+      <div className="max-w-2xl mx-auto py-10 text-center reveal reveal-1">
+        <p className="serial mb-4" style={{ color: 'var(--sage)' }}>Confirmado · Confirmed</p>
+        <p className="display text-[clamp(40px,5vw,72px)]" style={{ color: 'var(--ink)' }}>
+          {labels.confirm}
         </p>
-        <p className="mt-1 font-mono text-emerald-800">{success.confirmationCode}</p>
-        <a href={accountPath} className="mt-4 inline-block underline text-emerald-900">
-          {accountPath}
+        <hr className="rule-strong w-12 mx-auto mt-8 mb-6" />
+        <p className="dateline">{checkIn} → {checkOut}</p>
+        <p className="display-italic text-[36px] mt-3" style={{ color: 'var(--ember)' }}>
+          {success.confirmationCode}
+        </p>
+        <a href={accountPath} className="mt-10 inline-flex items-center gap-3 btn-ghost">
+          {accountPath} <span aria-hidden="true">→</span>
         </a>
       </div>
     );
   }
 
+  const dayNames = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      <div className="md:col-span-2">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">{labels.select_dates}</h2>
+    <div className="grid lg:grid-cols-12 gap-x-10 gap-y-12">
+      <div className="lg:col-span-8">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="serial mb-2" style={{ color: 'var(--ink-faint)' }}>Calendário</p>
+            <p className="display-italic text-[36px] capitalize" style={{ color: 'var(--ink)' }}>
+              {monthName(month)}
+            </p>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setMonth(addDays(month, -28).slice(0, 8) + '01')}
-              className="px-3 py-1 text-sm rounded border border-stone-300"
+              className="w-10 h-10 inline-flex items-center justify-center transition-colors"
+              style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              aria-label="Previous month"
             >
               ←
             </button>
-            <span className="px-3 py-1 text-sm">{monthName(month)}</span>
             <button
               onClick={() => setMonth(addDays(addDays(month, 32), -1).slice(0, 8) + '01')}
-              className="px-3 py-1 text-sm rounded border border-stone-300"
+              className="w-10 h-10 inline-flex items-center justify-center transition-colors"
+              style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              aria-label="Next month"
             >
               →
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-1 text-sm">
-          {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((d, i) => (
-            <div key={i} className="text-center text-xs text-stone-500 py-1">{d}</div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {dayNames.map((d, i) => (
+            <div key={i} className="text-center serial py-2" style={{ color: 'var(--ink-faint)' }}>{d}</div>
           ))}
           {days.map(({ date, thisMonth }) => {
             const isTaken = taken.has(date);
@@ -226,109 +237,157 @@ export default function BookingFlow({
             const selected = date === checkIn || date === checkOut;
             const between = isBetween(date);
             const disabled = isTaken || past;
+            const day = Number(date.slice(8));
             return (
               <button
                 key={date}
                 onClick={() => selectDay(date)}
                 disabled={disabled}
-                className={[
-                  'aspect-square rounded text-sm relative',
-                  !thisMonth ? 'text-stone-300' : '',
-                  disabled ? 'line-through text-stone-300 cursor-not-allowed' : 'hover:bg-stone-100',
-                  selected ? 'bg-stone-900 text-white hover:bg-stone-900' : '',
-                  between ? 'bg-stone-200' : ''
-                ].join(' ')}
+                className="aspect-square text-[15px] relative transition-all"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontVariationSettings: '"opsz" 36, "SOFT" 30, "wght" 380',
+                  color: !thisMonth
+                    ? 'var(--ink-faint)'
+                    : disabled
+                      ? 'var(--ink-faint)'
+                      : selected
+                        ? 'var(--paper)'
+                        : 'var(--ink)',
+                  background: selected
+                    ? 'var(--ink)'
+                    : between
+                      ? 'var(--paper-elevated)'
+                      : 'transparent',
+                  textDecoration: isTaken ? 'line-through' : 'none',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  border: between || selected ? 'none' : '1px solid transparent',
+                  borderTop: '1px solid var(--rule)',
+                  opacity: disabled ? 0.45 : 1
+                }}
                 title={isTaken ? labels.unavailable : ''}
               >
-                {Number(date.slice(8))}
+                {day}
+                {selected && (
+                  <span
+                    className="serial absolute top-1 left-1 text-[8px]"
+                    style={{ color: 'rgba(245,241,235,0.7)' }}
+                  >
+                    {date === checkIn ? 'IN' : 'OUT'}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
+
+        <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 dateline">
+          <span className="flex items-center gap-2">
+            <span style={{ width: 14, height: 14, background: 'var(--ink)', display: 'inline-block' }}></span>
+            {labels.check_in} / {labels.check_out}
+          </span>
+          <span className="flex items-center gap-2">
+            <span style={{ width: 14, height: 14, background: 'var(--paper-elevated)', border: '1px solid var(--rule)', display: 'inline-block' }}></span>
+            {labels.total}
+          </span>
+          <span className="flex items-center gap-2" style={{ textDecoration: 'line-through', color: 'var(--ink-faint)' }}>
+            {labels.unavailable}
+          </span>
+        </div>
       </div>
 
-      <aside className="rounded-lg border border-stone-200 bg-white p-5 h-fit md:sticky md:top-20">
-        {!initialUser ? (
-          <>
-            <p className="text-sm text-stone-600 mb-3">{labels.login_required}</p>
-            <a href={loginPath} className="block text-center rounded-md bg-stone-900 text-white px-4 py-2 text-sm">
-              {labels.cta_login}
-            </a>
-          </>
-        ) : !initialUser.emailVerified ? (
-          <p className="text-sm text-amber-700">{labels.email_not_verified}</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="block text-stone-500">{labels.check_in}</span>
-                <span className="font-medium">{checkIn ?? '—'}</span>
-              </div>
-              <div>
-                <span className="block text-stone-500">{labels.check_out}</span>
-                <span className="font-medium">{checkOut ?? '—'}</span>
-              </div>
-            </div>
-            <label className="block mt-4">
-              <span className="block text-sm text-stone-500 mb-1">{labels.guests}</span>
-              <input
-                type="number"
-                min={1}
-                max={maxGuests}
-                value={guests}
-                onChange={(e) => setGuests(Math.min(maxGuests, Math.max(1, Number(e.target.value))))}
-                className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block mt-3">
-              <span className="block text-sm text-stone-500 mb-1">{labels.special_requests}</span>
-              <textarea
-                rows={2}
-                value={special}
-                onChange={(e) => setSpecial(e.target.value)}
-                className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
-              />
-            </label>
-
-            {!checkIn || !checkOut ? (
-              <p className="mt-4 text-sm text-stone-500">{labels.no_dates}</p>
-            ) : loading ? (
-              <p className="mt-4 text-sm text-stone-500">…</p>
-            ) : !quote ? (
-              <p className="mt-4 text-sm text-red-600">{labels.unavailable}</p>
-            ) : (
-              <>
-                <ul className="mt-4 max-h-32 overflow-y-auto text-xs text-stone-600 space-y-0.5">
-                  {quote.nightly.map((n) => (
-                    <li key={n.date} className="flex justify-between">
-                      <span>{n.date}</span>
-                      <span>{n.price.toFixed(2)} {currency}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-3 flex justify-between font-medium">
-                  <span>{labels.total} ({labels.nights(quote.nightly.length)})</span>
-                  <span>{quote.total.toFixed(2)} {currency}</span>
+      <aside className="lg:col-span-4">
+        <div className="lg:sticky lg:top-24 p-7" style={{ background: 'var(--paper-elevated)', border: '1px solid var(--rule)' }}>
+          {!initialUser ? (
+            <>
+              <p className="dateline mb-3">{labels.login_required}</p>
+              <a href={loginPath} className="btn-primary justify-center w-full" style={{ display: 'flex' }}>
+                {labels.cta_login} <span aria-hidden="true">→</span>
+              </a>
+            </>
+          ) : !initialUser.emailVerified ? (
+            <p className="dateline" style={{ color: 'var(--ember)' }}>{labels.email_not_verified}</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <span className="field-label">{labels.check_in}</span>
+                  <p className="display-italic text-[20px]" style={{ color: 'var(--ink)' }}>{checkIn ?? '—'}</p>
                 </div>
-                {quote.minStay > quote.nightly.length && (
-                  <p className="mt-2 text-sm text-amber-700">{labels.min_stay(quote.minStay)}</p>
-                )}
-                {error && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {error === 'dates_taken' ? labels.unavailable : error}
+                <div>
+                  <span className="field-label">{labels.check_out}</span>
+                  <p className="display-italic text-[20px]" style={{ color: 'var(--ink)' }}>{checkOut ?? '—'}</p>
+                </div>
+              </div>
+
+              <label className="block mb-5">
+                <span className="field-label">{labels.guests}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={maxGuests}
+                  value={guests}
+                  onChange={(e) => setGuests(Math.min(maxGuests, Math.max(1, Number(e.target.value))))}
+                  className="field"
+                />
+              </label>
+
+              <label className="block mb-5">
+                <span className="field-label">{labels.special_requests}</span>
+                <textarea
+                  rows={2}
+                  value={special}
+                  onChange={(e) => setSpecial(e.target.value)}
+                  className="field resize-none"
+                />
+              </label>
+
+              {!checkIn || !checkOut ? (
+                <p className="dateline" style={{ color: 'var(--ink-muted)' }}>{labels.no_dates}</p>
+              ) : loading ? (
+                <p className="dateline">…</p>
+              ) : !quote ? (
+                <p className="dateline" style={{ color: 'var(--ember)' }}>{labels.unavailable}</p>
+              ) : (
+                <>
+                  <hr className="rule mb-4" />
+                  <ul className="max-h-32 overflow-y-auto text-[13px] space-y-1 mb-4" style={{ color: 'var(--ink-muted)', fontFamily: 'var(--font-serif)' }}>
+                    {quote.nightly.map((n) => (
+                      <li key={n.date} className="flex justify-between">
+                        <span className="numeral">{n.date}</span>
+                        <span className="numeral">{n.price.toFixed(2)} {currency}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <hr className="rule-strong mb-4" />
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="dateline">{labels.total} · {labels.nights(quote.nightly.length)}</span>
+                  </div>
+                  <p className="display text-[40px]" style={{ color: 'var(--ink)' }}>
+                    <span className="numeral">{quote.total.toFixed(0)}</span>
+                    <span className="text-[14px] dateline ml-2">{currency}</span>
                   </p>
-                )}
-                <button
-                  onClick={submitBooking}
-                  disabled={submitting || !quote.available || quote.minStay > quote.nightly.length}
-                  className="mt-4 w-full rounded-md bg-stone-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
-                >
-                  {submitting ? '…' : labels.confirm}
-                </button>
-              </>
-            )}
-          </>
-        )}
+                  {quote.minStay > quote.nightly.length && (
+                    <p className="dateline mt-3" style={{ color: 'var(--ember)' }}>{labels.min_stay(quote.minStay)}</p>
+                  )}
+                  {error && (
+                    <p className="dateline mt-3" style={{ color: 'var(--ember)' }}>
+                      {error === 'dates_taken' ? labels.unavailable : error}
+                    </p>
+                  )}
+                  <button
+                    onClick={submitBooking}
+                    disabled={submitting || !quote.available || quote.minStay > quote.nightly.length}
+                    className="btn-primary justify-center w-full mt-6 disabled:opacity-50"
+                    style={{ display: 'flex' }}
+                  >
+                    {submitting ? '…' : labels.confirm} <span aria-hidden="true">→</span>
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </aside>
     </div>
   );

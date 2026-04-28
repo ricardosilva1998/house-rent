@@ -1,12 +1,48 @@
 ---
-import { createT, type Locale } from '../i18n/use-translation';
+import { createT, type Locale, pathInLocale, locales } from '../i18n/use-translation';
 const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
 const t = createT(locale);
 const year = new Date().getFullYear();
 ---
-<footer class="mt-16 border-t border-stone-200 bg-white">
-  <div class="max-w-6xl mx-auto px-4 py-8 text-sm text-stone-500 flex flex-wrap items-center justify-between gap-4">
-    <span>© {year} {t('site.name')}</span>
-    <span class="text-xs">{t('site.tagline')}</span>
+<footer class="mt-32 border-t" style="border-color: var(--rule);">
+  <div class="max-w-[1320px] mx-auto px-6 lg:px-10 py-16">
+    <div class="grid md:grid-cols-12 gap-y-10 gap-x-8">
+      <div class="md:col-span-5">
+        <p class="display-italic text-[44px] leading-[0.95] mb-3" style="color: var(--ink);">
+          Retiro<br/>dos Baeta
+        </p>
+        <p class="dateline">Estabelecido na Serra da Estrela</p>
+      </div>
+      <div class="md:col-span-3">
+        <p class="serial mb-4">Páginas</p>
+        <ul class="space-y-2">
+          <li><a class="elink" href={pathInLocale('/', locale)}>{t('nav.home')}</a></li>
+          <li><a class="elink" href={pathInLocale('/casa', locale)}>{t('nav.house')}</a></li>
+          <li><a class="elink" href={pathInLocale('/reservar', locale)}>{t('nav.book')}</a></li>
+          <li><a class="elink" href={pathInLocale('/conta', locale)}>{t('nav.account')}</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <p class="serial mb-4">Idioma</p>
+        <ul class="space-y-2">
+          {locales.map((l) => (
+            <li><a class={`elink ${l === locale ? '' : 'opacity-60'}`} href={pathInLocale('/', l)}>{l === 'pt' ? 'Português' : l === 'en' ? 'English' : 'Español'}</a></li>
+          ))}
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <p class="serial mb-4">Coordenadas</p>
+        <ul class="space-y-2 text-sm" style="color: var(--ink-muted);">
+          <li>40.46°N · 7.54°W</li>
+          <li>1100m altitude</li>
+          <li>Beira Interior · PT</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="rule mt-12 mb-6" />
+    <div class="flex flex-wrap items-center justify-between gap-4 dateline">
+      <span>© {year} Retiro dos Baeta · Todos os direitos reservados</span>
+      <span class="serial">Edição digital · v1.0</span>
+    </div>
   </div>
 </footer>

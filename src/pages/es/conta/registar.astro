@@ -9,8 +9,13 @@ const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
 const t = createT(locale);
 ---
 <SiteLayout title={t('auth.register_title')}>
-  <section class="max-w-md mx-auto px-4 py-12">
-    <h1 class="text-2xl font-semibold mb-6">{t('auth.register_title')}</h1>
+  <section class="max-w-md mx-auto px-6 lg:px-10 py-20 lg:py-28">
+    <p class="serial mb-3">Conta · Account</p>
+    <hr class="rule-strong w-12 mb-6" />
+    <h1 class="display text-[clamp(40px,5vw,72px)] mb-3" style="text-wrap: balance;">{t('auth.register_title')}</h1>
+    <p class="display-italic text-[20px] mb-10" style="color: var(--ink-muted);">
+      {locale === 'en' ? 'Set up your dossier — bookings, vouchers, and stays.' : locale === 'es' ? 'Crea tu dossier — reservas, vouchers, estancias.' : 'Crie o seu dossier — reservas, vouchers e estadias.'}
+    </p>
     <AuthForms
       client:load
       mode="register"
@@ -30,8 +35,9 @@ const t = createT(locale);
         success_password_reset: 'OK'
       }}
     />
-    <p class="mt-6 text-sm text-stone-600">
-      <a href={pathInLocale('/conta/login', locale)} class="underline">{t('auth.login_title')}</a>
+    <hr class="rule mt-12 mb-6" />
+    <p class="dateline">
+      <a href={pathInLocale('/conta/login', locale)} class="elink">{t('auth.login_title')} ↗</a>
     </p>
   </section>
 </SiteLayout>

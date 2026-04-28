@@ -24,50 +24,73 @@ const past = await db
   .limit(20);
 ---
 <SiteLayout title={t('account.title')}>
-  <section class="max-w-3xl mx-auto px-4 py-12">
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-semibold">{t('account.title')}</h1>
+  <section class="max-w-[1200px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
+    <header class="flex flex-wrap items-end justify-between gap-6 mb-12">
+      <div>
+        <p class="serial mb-3">{t('account.title')}</p>
+        <h1 class="display text-[clamp(40px,5vw,80px)]">{user.name.split(' ')[0]}</h1>
+        <p class="dateline mt-2">{user.email}</p>
+      </div>
       <form method="POST" action="/api/auth/logout">
-        <button class="text-sm text-stone-600 underline" type="submit">{t('auth.logout')}</button>
+        <button class="btn-ghost" type="submit">{t('auth.logout')} →</button>
       </form>
-    </div>
+    </header>
 
-    <div class="grid md:grid-cols-2 gap-6">
-      <section class="rounded-lg border border-stone-200 bg-white p-5">
-        <h2 class="font-medium mb-1">{t('account.profile')}</h2>
-        <p class="text-stone-600 text-sm">{user.name}</p>
-        <p class="text-stone-500 text-sm">{user.email}</p>
-        {!user.emailVerifiedAt && (
-          <p class="text-amber-700 text-sm mt-3">{t('auth.verify_body')}</p>
-        )}
-      </section>
+    {!user.emailVerifiedAt && (
+      <div class="mb-12 p-6" style="background: var(--paper-elevated); border-left: 3px solid var(--ember);">
+        <p class="dateline mb-1" style="color: var(--ember);">{locale === 'en' ? 'Action required' : locale === 'es' ? 'Acción requerida' : 'Acção necessária'}</p>
+        <p style="color: var(--ink); font-family: var(--font-serif);">{t('auth.verify_body')}</p>
+      </div>
+    )}
 
-      <section class="rounded-lg border border-stone-200 bg-white p-5">
-        <h2 class="font-medium mb-3">{t('account.upcoming')}</h2>
+    <section class="grid lg:grid-cols-12 gap-x-10 gap-y-12">
+      <div class="lg:col-span-7">
+        <p class="serial mb-3">{t('account.upcoming')}</p>
+        <hr class="rule-strong w-12 mb-6" />
         {upcoming.length === 0 ? (
-          <p class="text-stone-500 text-sm">—</p>
+          <p class="display-italic text-[24px]" style="color: var(--ink-muted);">
+            {locale === 'en' ? 'No upcoming stays.' : locale === 'es' ? 'Sin estancias próximas.' : 'Sem estadias futuras.'}
+          </p>
         ) : (
-          <ul class="text-sm space-y-2">
+          <ul class="divide-y" style="border-color: var(--rule);">
             {upcoming.map((b) => (
-              <li class="flex justify-between items-center gap-2">
-                <span>{b.checkIn} → {b.checkOut}</span>
-                <span class="ml-auto font-mono text-stone-500">{b.confirmationCode}</span>
-                <a href={`/api/bookings/${b.id}/voucher`} target="_blank" rel="noopener" class="text-xs underline text-stone-700">PDF</a>
+              <li class="py-6 grid grid-cols-12 gap-4 items-baseline border-t" style="border-color: var(--rule);">
+                <span class="serial col-span-2" style="color: var(--ink-faint);">{b.checkIn.slice(5).replace('-', '/')}</span>
+                <div class="col-span-7">
+                  <p class="display-italic text-[24px]">{b.checkIn} → {b.checkOut}</p>
+                  <p class="dateline mt-1" style="color: var(--ink-muted);">{b.numGuests} · {b.quotedPrice.toFixed(0)} {b.currency}</p>
+                </div>
+                <div class="col-span-3 text-right space-y-1">
+                  <p class="numeral text-[12px]" style="color: var(--ink-muted);">{b.confirmationCode}</p>
+                  <a href={`/api/bookings/${b.id}/voucher`} target="_blank" rel="noopener" class="dateline elink">PDF ↗</a>
+                </div>
               </li>
             ))}
           </ul>
         )}
-      </section>
-    </div>
+      </div>
+
+      <div class="lg:col-span-5 lg:pl-8">
+        <p class="serial mb-3">{t('account.profile')}</p>
+        <hr class="rule-strong w-12 mb-6" />
+        <ul class="space-y-2 text-[15px]" style="font-family: var(--font-serif);">
+          <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('auth.name')}</span><span>{user.name}</span></li>
+          <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('auth.email')}</span><span>{user.email}</span></li>
+          {user.phone && <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('auth.phone')}</span><span>{user.phone}</span></li>}
+          {user.country && <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('auth.country')}</span><span>{user.country}</span></li>}
+        </ul>
+      </div>
+    </section>
 
     {past.length > 0 && (
-      <section class="mt-8 rounded-lg border border-stone-200 bg-white p-5">
-        <h2 class="font-medium mb-3">{t('account.past')}</h2>
-        <ul class="text-sm space-y-2">
+      <section class="mt-20">
+        <p class="serial mb-3">{t('account.past')}</p>
+        <hr class="rule-strong w-12 mb-6" />
+        <ul class="divide-y" style="border-color: var(--rule);">
           {past.map((b) => (
-            <li class="flex justify-between text-stone-700">
+            <li class="py-4 flex items-baseline justify-between border-t" style="border-color: var(--rule); color: var(--ink-muted); font-family: var(--font-serif);">
               <span>{b.checkIn} → {b.checkOut}</span>
-              <span class="font-mono text-stone-500">{b.confirmationCode}</span>
+              <span class="numeral text-[12px]">{b.confirmationCode}</span>
             </li>
           ))}
         </ul>

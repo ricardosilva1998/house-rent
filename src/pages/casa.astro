@@ -22,58 +22,117 @@ const trRows = property
 const tr = trRows[0];
 ---
 <SiteLayout title={property?.name ?? t('site.name')}>
-  <section class="max-w-6xl mx-auto px-4 py-10">
-    <h1 class="text-3xl font-semibold tracking-tight">{property?.name ?? t('site.name')}</h1>
-    <p class="text-stone-600 mt-1">{[property?.city, property?.region].filter(Boolean).join(', ')}</p>
-    {photos.length > 0 && (
-      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div class="md:col-span-2 md:row-span-2 aspect-[4/3] rounded-lg overflow-hidden bg-stone-200">
-          <img src={photos[0]!.url} alt={photos[0]!.altText ?? ''} class="w-full h-full object-cover" />
+  <article>
+    <!-- Masthead -->
+    <header class="pt-12 lg:pt-20 pb-10">
+      <div class="max-w-[1320px] mx-auto px-6 lg:px-10">
+        <div class="reveal reveal-1 flex items-center justify-between dateline mb-10">
+          <span>{[property?.city, property?.region].filter(Boolean).join(' · ')}</span>
+          <span>40.46°N · 7.54°W</span>
         </div>
-        {photos.slice(1, 5).map((p) => (
-          <div class="aspect-square rounded-lg overflow-hidden bg-stone-200">
-            <img src={p.url} alt={p.altText ?? ''} class="w-full h-full object-cover" />
-          </div>
-        ))}
+        <h1 class="reveal reveal-2 display text-[clamp(56px,9vw,148px)]" style="text-wrap: balance;">
+          {property?.name ?? t('site.name')}
+        </h1>
+        <p class="reveal reveal-3 mt-5 display-italic text-[clamp(20px,2vw,28px)]" style="color: var(--ink-muted);">
+          {tr?.tagline ?? t('site.tagline')}
+        </p>
       </div>
+    </header>
+
+    <!-- Lead photo -->
+    {photos[0] && (
+      <figure class="reveal reveal-4 photo-card mx-auto max-w-[1320px] aspect-[16/8]">
+        <img src={photos[0].url} alt={photos[0].altText ?? ''} class="w-full h-full object-cover" />
+      </figure>
     )}
 
-    <div class="mt-10 grid md:grid-cols-3 gap-8">
-      <article class="md:col-span-2">
-        <p class="text-stone-700 whitespace-pre-line leading-relaxed">{tr?.description ?? ''}</p>
+    <!-- Body essay + sticky aside -->
+    <section class="py-20 lg:py-28">
+      <div class="max-w-[1320px] mx-auto px-6 lg:px-10 grid lg:grid-cols-12 gap-x-10 gap-y-16">
+        <article class="lg:col-span-8">
+          <p class="serial mb-3">{locale === 'en' ? 'About the house' : locale === 'es' ? 'Sobre la casa' : 'Sobre a casa'}</p>
+          <hr class="rule-strong w-12 mb-8" />
+          <p class="lede text-[19px] leading-[1.75] mb-10" style="color: var(--ink); font-family: var(--font-serif);">
+            {tr?.description ?? ''}
+          </p>
 
-        {amenitiesActive.length > 0 && (
-          <section class="mt-10">
-            <h2 class="text-xl font-semibold mb-3">{t('home.amenities_title')}</h2>
-            <ul class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-              {amenitiesActive.map((a) => (
-                <li class="rounded-md border border-stone-200 bg-white px-3 py-2">{a.label}</li>
-              ))}
+          {amenitiesActive.length > 0 && (
+            <section class="mt-16">
+              <p class="serial mb-3">{t('home.amenities_title')}</p>
+              <hr class="rule-strong w-12 mb-8" />
+              <ul class="grid grid-cols-2 gap-x-8">
+                {amenitiesActive.map((a, i) => (
+                  <li class="flex items-baseline gap-4 py-3 border-t" style="border-color: var(--rule);">
+                    <span class="numeral text-[10px]" style="color: var(--ink-faint);">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="display-tight text-[20px]">{a.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {property?.houseRules && (
+            <section class="mt-16">
+              <p class="serial mb-3">{t('home.rules_title')}</p>
+              <hr class="rule-strong w-12 mb-8" />
+              <p class="text-[16px] leading-[1.7] whitespace-pre-line" style="color: var(--ink); font-family: var(--font-serif);">
+                {property.houseRules}
+              </p>
+            </section>
+          )}
+        </article>
+
+        <aside class="lg:col-span-4">
+          <div class="lg:sticky lg:top-24 p-7" style="background: var(--paper-elevated); border: 1px solid var(--rule);">
+            <p class="dateline mb-4">{locale === 'en' ? 'Stay summary' : locale === 'es' ? 'Resumen' : 'Resumo da estadia'}</p>
+            <p class="display-tight text-[40px]">
+              <span class="numeral">{property?.basePrice.toFixed(0)}</span>
+              <span class="text-[14px] dateline ml-1" style="color: var(--ink-muted);">{property?.currency}</span>
+            </p>
+            <p class="dateline mt-1" style="color: var(--ink-muted);">
+              {locale === 'en' ? 'from / night' : locale === 'es' ? 'desde / noche' : 'desde / noite'}
+            </p>
+
+            <hr class="rule my-6" />
+
+            <ul class="space-y-3 text-[14px]">
+              {property && (
+                <>
+                  <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('booking.guests')}</span><span class="numeral">{property.maxGuests}</span></li>
+                  <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('booking.bedrooms')}</span><span class="numeral">{property.bedrooms}</span></li>
+                  <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('booking.beds')}</span><span class="numeral">{property.beds}</span></li>
+                  <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('booking.check_in')}</span><span class="numeral">{property.checkInTime}</span></li>
+                  <li class="flex justify-between"><span style="color: var(--ink-muted);">{t('booking.check_out')}</span><span class="numeral">{property.checkOutTime}</span></li>
+                </>
+              )}
             </ul>
-          </section>
-        )}
 
-        {property?.houseRules && (
-          <section class="mt-10">
-            <h2 class="text-xl font-semibold mb-3">{t('home.rules_title')}</h2>
-            <p class="text-stone-700 whitespace-pre-line text-sm">{property.houseRules}</p>
-          </section>
-        )}
-      </article>
+            <a href={pathInLocale('/reservar', locale)} class="mt-7 w-full btn-primary justify-center" style="display: flex;">
+              {t('home.hero_cta')}
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </section>
 
-      <aside class="rounded-lg border border-stone-200 bg-white p-5 h-fit md:sticky md:top-20">
-        <p class="text-sm text-stone-500">{t('booking.total')}</p>
-        <p class="text-2xl font-semibold">
-          {property ? `${property.basePrice.toFixed(0)} ${property.currency}` : '—'}
-          <span class="text-sm font-normal text-stone-500"> / {t('booking.nights', { n: 1 })}</span>
-        </p>
-        <p class="mt-3 text-sm text-stone-500">
-          {property ? `${property.maxGuests} ${t('booking.guests').toLowerCase()} · ${property.bedrooms} ${t('booking.bedrooms')} · ${property.beds} ${t('booking.beds')}` : ''}
-        </p>
-        <a href={pathInLocale('/reservar', locale)} class="mt-4 block text-center rounded-md bg-stone-900 text-white px-4 py-2 text-sm font-medium">
-          {t('home.hero_cta')}
-        </a>
-      </aside>
-    </div>
-  </section>
+    <!-- Photo strip -->
+    {photos.length > 1 && (
+      <section class="pb-24 lg:pb-32">
+        <div class="max-w-[1320px] mx-auto px-6 lg:px-10">
+          <p class="serial mb-6">{locale === 'en' ? 'Plates' : locale === 'es' ? 'Imágenes' : 'Pranchas'}</p>
+          <div class="grid grid-cols-12 gap-3 md:gap-5">
+            {photos.slice(1, 9).map((p, idx) => (
+              <figure class={`photo-card aspect-[4/5] ${idx % 5 === 0 ? 'col-span-6 md:col-span-5' : idx % 5 === 1 ? 'col-span-6 md:col-span-3' : idx % 5 === 2 ? 'col-span-12 md:col-span-4' : idx % 5 === 3 ? 'col-span-6 md:col-span-7' : 'col-span-6 md:col-span-5'}`}>
+                <img src={p.url} alt={p.altText ?? ''} class="w-full h-full object-cover" />
+                <figcaption class="absolute bottom-2 left-2 dateline px-2 py-1" style="background: rgba(245,241,235,0.85); color: var(--ink);">
+                  {String(idx + 1).padStart(2, '0')} · {p.altText ?? ''}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+  </article>
 </SiteLayout>

@@ -91,55 +91,55 @@ export default function AuthForms({ mode, next, initialToken, labels }: Props) {
     }
   }
 
-  const input =
-    'w-full rounded-md border border-stone-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-stone-900';
-
   return (
-    <form onSubmit={submit} className="space-y-3 max-w-sm">
+    <form onSubmit={submit} className="space-y-7">
       {(mode === 'login' || mode === 'register' || mode === 'forgot') && (
         <label className="block">
-          <span className="text-sm font-medium text-stone-700">{labels.email}</span>
-          <input type="email" required className={input} value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span className="field-label">{labels.email}</span>
+          <input type="email" required className="field" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
       )}
       {mode === 'register' && (
         <>
           <label className="block">
-            <span className="text-sm font-medium text-stone-700">{labels.name}</span>
-            <input required className={input} value={name} onChange={(e) => setName(e.target.value)} />
+            <span className="field-label">{labels.name}</span>
+            <input required className="field" value={name} onChange={(e) => setName(e.target.value)} />
           </label>
-          <label className="block">
-            <span className="text-sm font-medium text-stone-700">{labels.phone}</span>
-            <input className={input} value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium text-stone-700">{labels.country}</span>
-            <input className={input} value={country} onChange={(e) => setCountry(e.target.value)} />
-          </label>
+          <div className="grid grid-cols-2 gap-6">
+            <label className="block">
+              <span className="field-label">{labels.phone}</span>
+              <input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="field-label">{labels.country}</span>
+              <input className="field" value={country} onChange={(e) => setCountry(e.target.value)} />
+            </label>
+          </div>
         </>
       )}
       {(mode === 'login' || mode === 'register' || mode === 'reset') && (
         <label className="block">
-          <span className="text-sm font-medium text-stone-700">
+          <span className="field-label">
             {mode === 'reset' ? labels.new_password : labels.password}
           </span>
-          <input type="password" required minLength={8} className={input} value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input type="password" required minLength={8} className="field" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
       )}
       {mode === 'reset' && !initialToken && (
         <label className="block">
-          <span className="text-sm font-medium text-stone-700">Token</span>
-          <input required className={input} value={token} onChange={(e) => setToken(e.target.value)} />
+          <span className="field-label">Token</span>
+          <input required className="field" value={token} onChange={(e) => setToken(e.target.value)} />
         </label>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {done && <p className="text-sm text-emerald-700">{done}</p>}
+      {error && <p className="dateline" style={{ color: 'var(--ember)' }}>{error}</p>}
+      {done && <p className="dateline" style={{ color: 'var(--sage)' }}>{done}</p>}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800 disabled:opacity-60"
+        className="btn-primary w-full justify-center disabled:opacity-60"
+        style={{ display: 'flex' }}
       >
-        {loading ? '…' : labels.submit}
+        {loading ? '…' : labels.submit} <span aria-hidden="true">→</span>
       </button>
     </form>
   );

@@ -12,38 +12,47 @@ const stripLocale = (p: string) => {
 };
 const naked = stripLocale(path);
 ---
-<header class="border-b border-stone-200 bg-white/80 backdrop-blur sticky top-0 z-30">
-  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
-    <a href={pathInLocale('/', locale)} class="font-semibold text-lg tracking-tight">
-      {t('site.name')}
-    </a>
-    <nav class="hidden md:flex items-center gap-5 text-sm text-stone-700">
-      <a href={pathInLocale('/casa', locale)} class="hover:text-stone-900">{t('nav.house')}</a>
-      <a href={pathInLocale('/reservar', locale)} class="hover:text-stone-900">{t('nav.book')}</a>
-    </nav>
-    <div class="ml-auto flex items-center gap-3 text-sm">
-      <div class="flex items-center gap-1 text-stone-500">
-        {locales.map((l) => (
-          <a
-            href={pathInLocale(naked === '/' ? '/' : naked, l)}
-            class={`px-2 py-1 rounded ${l === locale ? 'bg-stone-900 text-white' : 'hover:bg-stone-100'}`}
-          >
-            {l.toUpperCase()}
+<header class="sticky top-0 z-30 backdrop-blur-sm" style="background: color-mix(in oklab, var(--paper) 88%, transparent);">
+  <div class="border-b" style="border-color: var(--rule);">
+    <div class="max-w-[1320px] mx-auto px-6 lg:px-10 h-16 flex items-center gap-10">
+      <a href={pathInLocale('/', locale)} class="flex items-center gap-3 group">
+        <span class="display-italic text-[26px] tracking-tight" style="color: var(--ink);">Retiro dos Baeta</span>
+      </a>
+
+      <span class="hidden lg:inline-block dateline">
+        Serra&nbsp;da&nbsp;Estrela&nbsp;·&nbsp;Manteigas
+      </span>
+
+      <nav class="ml-auto flex items-center gap-7 dateline">
+        <a href={pathInLocale('/casa', locale)} class="elink">{t('nav.house')}</a>
+        <a href={pathInLocale('/reservar', locale)} class="elink">{t('nav.book')}</a>
+      </nav>
+
+      <div class="flex items-center gap-4 pl-4 ml-4 border-l" style="border-color: var(--rule);">
+        <div class="flex items-center gap-2">
+          {locales.map((l) => (
+            <a
+              href={pathInLocale(naked === '/' ? '/' : naked, l)}
+              class={`numeral text-[11px] tracking-[0.18em] uppercase transition-colors ${l === locale ? '' : 'opacity-50 hover:opacity-100'}`}
+              style={l === locale ? 'color: var(--ember);' : 'color: var(--ink);'}
+            >
+              {l}
+            </a>
+          ))}
+        </div>
+        {user ? (
+          <a href={pathInLocale('/conta', locale)} class="dateline elink">
+            {user.name.split(' ')[0]}
           </a>
-        ))}
+        ) : (
+          <a href={pathInLocale('/conta/login', locale)} class="dateline elink">
+            {t('nav.login')}
+          </a>
+        )}
+        {user?.role === 'admin' && (
+          <a href="/admin" class="numeral text-[11px] tracking-[0.18em] uppercase px-2 py-1" style="background: var(--ink); color: var(--paper);">Admin</a>
+        )}
       </div>
-      {user ? (
-        <a href={pathInLocale('/conta', locale)} class="font-medium hover:underline">
-          {user.name.split(' ')[0]}
-        </a>
-      ) : (
-        <a href={pathInLocale('/conta/login', locale)} class="font-medium hover:underline">
-          {t('nav.login')}
-        </a>
-      )}
-      {user?.role === 'admin' && (
-        <a href="/admin" class="px-3 py-1 rounded-md bg-stone-900 text-white">Admin</a>
-      )}
     </div>
   </div>
 </header>

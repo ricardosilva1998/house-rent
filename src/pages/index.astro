@@ -21,68 +21,193 @@ const trRows = property
   : [];
 const tr = trRows[0];
 const heroPhoto = photos[0];
+const issueLabel = locale === 'en' ? 'No. 01 — Edição inaugural' : locale === 'es' ? 'Nº 01 — Edición inaugural' : 'Nº 01 — Edição inaugural';
 ---
-<SiteLayout title={t('site.tagline')}>
+<SiteLayout title={tr?.tagline ?? t('site.tagline')}>
+  <!-- HERO -->
   <section class="relative">
     {heroPhoto ? (
-      <div class="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
-        <img src={heroPhoto.url} alt={heroPhoto.altText ?? property?.name ?? ''} class="absolute inset-0 w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/60" />
-        <div class="relative max-w-6xl mx-auto px-4 h-full flex flex-col justify-end pb-12 text-white">
-          <h1 class="text-4xl md:text-5xl font-semibold tracking-tight">
-            {property?.name ?? t('site.name')}
-          </h1>
-          <p class="mt-3 text-lg text-stone-100/90 max-w-xl">
-            {tr?.tagline ?? t('site.tagline')}
-          </p>
-          <div class="mt-6">
-            <a href={pathInLocale('/reservar', locale)} class="inline-block px-5 py-3 rounded-md bg-white text-stone-900 font-medium hover:bg-stone-100">
-              {t('home.hero_cta')}
-            </a>
+      <div class="relative w-full overflow-hidden" style="height: min(86vh, 820px);">
+        <img
+          src={heroPhoto.url}
+          alt={heroPhoto.altText ?? property?.name ?? ''}
+          class="absolute inset-0 w-full h-full object-cover"
+          style="filter: saturate(0.9) contrast(1.04);"
+        />
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(31,26,20,0.18) 0%, rgba(31,26,20,0.04) 35%, rgba(31,26,20,0.62) 100%);"></div>
+        <div class="absolute inset-0 max-w-[1320px] mx-auto px-6 lg:px-10 flex flex-col">
+          <div class="reveal reveal-1 pt-8 flex justify-between items-start text-white/90">
+            <span class="dateline" style="color: rgba(255, 250, 240, 0.78);">{issueLabel}</span>
+            <span class="dateline" style="color: rgba(255, 250, 240, 0.78);">40.46°N · 7.54°W · 1100m</span>
+          </div>
+          <div class="mt-auto pb-14 lg:pb-20">
+            <p class="reveal reveal-2 dateline mb-5" style="color: rgba(255, 250, 240, 0.85);">
+              {locale === 'en' ? 'A countryside retreat — est. ' : locale === 'es' ? 'Un retiro de campo — est. ' : 'Um retiro de campo — fundado em '}
+              <span class="numeral">MMXXVI</span>
+            </p>
+            <h1 class="reveal reveal-3 display text-white text-[clamp(56px,9vw,148px)]" style="text-wrap: balance;">
+              {property?.name ?? t('site.name')}
+            </h1>
+            <p class="reveal reveal-4 mt-6 max-w-xl text-[18px] leading-relaxed" style="color: rgba(255, 250, 240, 0.92); font-family: var(--font-serif);">
+              {tr?.tagline ?? t('site.tagline')}
+            </p>
+            <div class="reveal reveal-5 mt-10 flex flex-wrap items-center gap-4">
+              <a href={pathInLocale('/reservar', locale)} class="btn-primary" style="background: var(--paper); color: var(--ink); border-color: var(--paper);">
+                {t('home.hero_cta')}
+                <span aria-hidden="true">→</span>
+              </a>
+              <a href={pathInLocale('/casa', locale)} class="dateline elink" style="color: rgba(255, 250, 240, 0.85);">
+                {t('nav.house')} ↗
+              </a>
+            </div>
           </div>
         </div>
       </div>
     ) : (
-      <div class="bg-stone-200 h-72 flex items-center justify-center text-stone-500">
-        Adicione fotos no painel de admin
+      <div class="h-72 flex items-center justify-center" style="background: var(--color-bone-200);">
+        <span class="dateline">Adicione fotos no painel de admin</span>
       </div>
     )}
   </section>
 
-  <section class="max-w-3xl mx-auto px-4 py-12">
-    <h2 class="text-2xl font-semibold mb-3">{t('home.intro_title')}</h2>
-    <p class="text-stone-700 leading-relaxed whitespace-pre-line">
-      {tr?.description ?? t('home.intro_body')}
-    </p>
+  <!-- SECTION 01 — O RETIRO -->
+  <section class="py-24 lg:py-32">
+    <div class="max-w-[1320px] mx-auto px-6 lg:px-10 grid lg:grid-cols-12 gap-x-10 gap-y-12">
+      <aside class="lg:col-span-3">
+        <p class="serial mb-3">01 / 04</p>
+        <hr class="rule-strong w-12 mb-3" />
+        <p class="dateline">
+          {locale === 'en' ? 'The retreat' : locale === 'es' ? 'El retiro' : 'O retiro'}
+        </p>
+      </aside>
+      <div class="lg:col-span-9 lg:pl-8">
+        <h2 class="display-tight text-[clamp(36px,5.6vw,72px)] mb-8" style="text-wrap: balance;">
+          {locale === 'en'
+            ? 'A house in the mountains, kept exactly as it was — only quieter.'
+            : locale === 'es'
+            ? 'Una casa en la sierra, mantenida tal y como era — solo que más silenciosa.'
+            : 'Uma casa na serra, mantida exactamente como era — apenas mais sossegada.'}
+        </h2>
+        <p class="lede text-[19px] leading-[1.7] max-w-[58ch]" style="color: var(--ink); font-family: var(--font-serif);">
+          {tr?.description ?? t('home.intro_body')}
+        </p>
+      </div>
+    </div>
   </section>
 
-  {amenitiesActive.length > 0 && (
-    <section class="max-w-5xl mx-auto px-4 py-8">
-      <h2 class="text-xl font-semibold mb-4">{t('home.amenities_title')}</h2>
-      <ul class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
-        {amenitiesActive.map((a) => (
-          <li class="rounded-md border border-stone-200 bg-white px-3 py-2">{a.label}</li>
-        ))}
-      </ul>
-    </section>
-  )}
-
+  <!-- SECTION 02 — A CASA (asymmetric photo essay) -->
   {photos.length > 1 && (
-    <section class="max-w-6xl mx-auto px-4 py-12">
-      <ul class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {photos.slice(1, 7).map((p) => (
-          <li class="aspect-[4/3] rounded-md overflow-hidden bg-stone-200">
-            <img src={p.url} alt={p.altText ?? ''} class="w-full h-full object-cover" />
-          </li>
-        ))}
-      </ul>
+    <section class="py-16 lg:py-24" style="background: var(--paper-elevated);">
+      <div class="max-w-[1320px] mx-auto px-6 lg:px-10">
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <p class="serial mb-3">02 / 04</p>
+            <hr class="rule-strong w-12 mb-3" />
+            <p class="display-italic text-[clamp(36px,5vw,64px)]">
+              {locale === 'en' ? 'A photo essay' : locale === 'es' ? 'Un ensayo fotográfico' : 'Um ensaio fotográfico'}
+            </p>
+          </div>
+          <a href={pathInLocale('/casa', locale)} class="dateline elink hidden md:inline">
+            {locale === 'en' ? 'See all rooms' : locale === 'es' ? 'Ver todas las estancias' : 'Ver todas as divisões'} ↗
+          </a>
+        </div>
+
+        <div class="grid grid-cols-12 gap-3 md:gap-5">
+          {photos[1] && (
+            <figure class="photo-card col-span-12 md:col-span-7 aspect-[4/3]">
+              <img src={photos[1].url} alt={photos[1].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[2] && (
+            <figure class="photo-card col-span-6 md:col-span-5 aspect-[4/5]">
+              <img src={photos[2].url} alt={photos[2].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[3] && (
+            <figure class="photo-card col-span-6 md:col-span-4 aspect-square">
+              <img src={photos[3].url} alt={photos[3].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[4] && (
+            <figure class="photo-card col-span-12 md:col-span-8 aspect-[16/9]">
+              <img src={photos[4].url} alt={photos[4].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[5] && (
+            <figure class="photo-card col-span-6 md:col-span-3 aspect-[3/4]">
+              <img src={photos[5].url} alt={photos[5].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[6] && (
+            <figure class="photo-card col-span-6 md:col-span-3 aspect-[3/4]">
+              <img src={photos[6].url} alt={photos[6].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+          {photos[7] && (
+            <figure class="photo-card col-span-12 md:col-span-6 aspect-[4/3]">
+              <img src={photos[7].url} alt={photos[7].altText ?? ''} class="w-full h-full object-cover" />
+            </figure>
+          )}
+        </div>
+      </div>
     </section>
   )}
 
-  {property?.houseRules && (
-    <section class="max-w-3xl mx-auto px-4 py-8">
-      <h2 class="text-xl font-semibold mb-3">{t('home.rules_title')}</h2>
-      <p class="text-stone-700 whitespace-pre-line text-sm">{property.houseRules}</p>
+  <!-- SECTION 03 — COMODIDADES (editorial list) -->
+  {amenitiesActive.length > 0 && (
+    <section class="py-24 lg:py-32">
+      <div class="max-w-[1320px] mx-auto px-6 lg:px-10 grid lg:grid-cols-12 gap-x-10 gap-y-10">
+        <aside class="lg:col-span-3">
+          <p class="serial mb-3">03 / 04</p>
+          <hr class="rule-strong w-12 mb-3" />
+          <p class="dateline">{t('home.amenities_title')}</p>
+        </aside>
+        <div class="lg:col-span-9 lg:pl-8">
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10">
+            {amenitiesActive.map((a, i) => (
+              <li class="flex items-baseline gap-4 py-4 border-t" style="border-color: var(--rule);">
+                <span class="numeral text-[11px] tracking-[0.18em]" style="color: var(--ink-faint);">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span class="display-tight text-[22px]" style="color: var(--ink);">
+                  {a.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </section>
   )}
+
+  <!-- SECTION 04 — RESERVAR -->
+  <section class="py-24 lg:py-32" style="background: var(--ink); color: var(--paper);">
+    <div class="max-w-[1320px] mx-auto px-6 lg:px-10 grid lg:grid-cols-12 gap-x-10 gap-y-12">
+      <aside class="lg:col-span-3">
+        <p class="serial mb-3" style="color: rgba(245, 241, 235, 0.55);">04 / 04</p>
+        <hr class="w-12 mb-3" style="border: 0; border-top: 1px solid rgba(245, 241, 235, 0.45);" />
+        <p class="dateline" style="color: rgba(245, 241, 235, 0.65);">
+          {locale === 'en' ? 'Reserve' : locale === 'es' ? 'Reservar' : 'Reservar'}
+        </p>
+      </aside>
+      <div class="lg:col-span-9 lg:pl-8">
+        <p class="display-italic text-[clamp(40px,5.6vw,80px)] leading-[1.02]" style="color: var(--paper); text-wrap: balance;">
+          {locale === 'en'
+            ? 'Pick your nights. We keep the fire going.'
+            : locale === 'es'
+            ? 'Elige tus noches. Mantenemos la chimenea encendida.'
+            : 'Escolha as suas noites. Nós tratamos da lareira.'}
+        </p>
+        <div class="mt-12 flex flex-wrap items-center gap-6">
+          <a href={pathInLocale('/reservar', locale)} class="btn-primary" style="background: var(--paper); color: var(--ink); border-color: var(--paper);">
+            {t('home.hero_cta')}
+            <span aria-hidden="true">→</span>
+          </a>
+          <span class="dateline" style="color: rgba(245, 241, 235, 0.6);">
+            {property ? `${locale === 'en' ? 'From' : locale === 'es' ? 'Desde' : 'Desde'} ${property.basePrice.toFixed(0)} ${property.currency} / ${locale === 'en' ? 'night' : 'noite'}` : ''}
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
 </SiteLayout>

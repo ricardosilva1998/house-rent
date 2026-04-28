@@ -18,14 +18,18 @@ const labels = {
   confirm: t('booking.confirm'),
   no_dates: t('booking.no_dates'),
   unavailable: t('booking.unavailable'),
-  login_required: t('auth.login_title') + ' →',
+  login_required:
+    locale === 'en' ? 'Please log in to book your stay.' :
+    locale === 'es' ? 'Inicia sesión para reservar.' :
+    'Inicie sessão para reservar a sua estadia.',
   email_not_verified: t('errors.email_not_verified'),
   cta_login: t('nav.login'),
   special_requests:
-    locale === 'en' ? 'Notes (optional)' : locale === 'es' ? 'Notas (opcional)' : 'Notas (opcional)'
+    locale === 'en' ? 'Notes for the host' :
+    locale === 'es' ? 'Notas para el anfitrión' :
+    'Notas para o anfitrião'
 };
 
-// Plural-aware nights builder evaluated at render time and serialised for the client
 const nightsLabel = (n: number) =>
   locale === 'en' ? (n === 1 ? '1 night' : `${n} nights`) :
   locale === 'es' ? (n === 1 ? '1 noche' : `${n} noches`) :
@@ -35,29 +39,40 @@ const minStayLabel = (n: number) =>
   locale === 'es' ? `Estancia mínima: ${n} noches` :
   `Estadia mínima de ${n} noites`;
 
-const labelsForClient = {
-  ...labels,
-  nights: nightsLabel,
-  min_stay: minStayLabel
-};
+const labelsForClient = { ...labels, nights: nightsLabel, min_stay: minStayLabel };
 ---
 <SiteLayout title={t('nav.book')}>
-  <section class="max-w-5xl mx-auto px-4 py-12">
-    <h1 class="text-2xl font-semibold mb-6">
-      {property?.name ?? t('site.name')} — {t('nav.book')}
-    </h1>
-    {!property ? (
-      <p class="text-stone-600">—</p>
-    ) : (
-      <BookingFlow
-        client:load
-        loginPath={pathInLocale('/conta/login?next=/reservar', locale)}
-        accountPath={pathInLocale('/conta', locale)}
-        initialUser={user ? { id: user.id, name: user.name, emailVerified: !!user.emailVerifiedAt } : null}
-        maxGuests={property.maxGuests}
-        currency={property.currency}
-        labels={labelsForClient}
-      />
-    )}
+  <header class="pt-12 lg:pt-20 pb-12">
+    <div class="max-w-[1320px] mx-auto px-6 lg:px-10">
+      <p class="reveal reveal-1 dateline mb-4">{locale === 'en' ? 'Reservations · ' : locale === 'es' ? 'Reservas · ' : 'Reservas · '}{property?.name ?? ''}</p>
+      <h1 class="reveal reveal-2 display text-[clamp(48px,7.5vw,120px)]" style="text-wrap: balance;">
+        {locale === 'en' ? 'Choose your nights' : locale === 'es' ? 'Elige tus noches' : 'Escolha as suas noites'}
+      </h1>
+      <p class="reveal reveal-3 mt-5 display-italic text-[clamp(18px,1.6vw,24px)] max-w-2xl" style="color: var(--ink-muted);">
+        {locale === 'en'
+          ? 'Each stay is private — only your party occupies the house.'
+          : locale === 'es'
+          ? 'Cada estancia es privada — solo tu grupo ocupa la casa.'
+          : 'Cada estadia é privada — apenas o seu grupo ocupa a casa.'}
+      </p>
+    </div>
+  </header>
+
+  <section class="pb-32">
+    <div class="max-w-[1320px] mx-auto px-6 lg:px-10">
+      {!property ? (
+        <p class="dateline">—</p>
+      ) : (
+        <BookingFlow
+          client:load
+          loginPath={pathInLocale('/conta/login?next=/reservar', locale)}
+          accountPath={pathInLocale('/conta', locale)}
+          initialUser={user ? { id: user.id, name: user.name, emailVerified: !!user.emailVerifiedAt } : null}
+          maxGuests={property.maxGuests}
+          currency={property.currency}
+          labels={labelsForClient}
+        />
+      )}
+    </div>
   </section>
 </SiteLayout>

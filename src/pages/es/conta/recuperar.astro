@@ -9,8 +9,10 @@ const token = Astro.url.searchParams.get('token') ?? undefined;
 const mode = token ? 'reset' : 'forgot';
 ---
 <SiteLayout title={t('auth.forgot')}>
-  <section class="max-w-md mx-auto px-4 py-12">
-    <h1 class="text-2xl font-semibold mb-6">{t('auth.forgot')}</h1>
+  <section class="max-w-md mx-auto px-6 lg:px-10 py-20 lg:py-28">
+    <p class="serial mb-3">Conta · Password</p>
+    <hr class="rule-strong w-12 mb-6" />
+    <h1 class="display text-[clamp(40px,5vw,72px)] mb-8" style="text-wrap: balance;">{t('auth.forgot')}</h1>
     <AuthForms
       client:load
       mode={mode}

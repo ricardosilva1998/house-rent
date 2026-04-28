@@ -15,15 +15,18 @@ const { title, description } = Astro.props;
 const pageTitle = title ? `${title} — ${t('site.name')}` : t('site.name');
 ---
 <!doctype html>
-<html lang={locale} class="h-full">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>{pageTitle}</title>
     {description && <meta name="description" content={description} />}
+    <meta name="theme-color" content="#F5F1EB" />
   </head>
-  <body class="h-full bg-stone-50 text-stone-900 font-sans antialiased flex flex-col">
+  <body class="min-h-screen flex flex-col">
     <SiteHeader />
     <main class="flex-1">
       <slot />
