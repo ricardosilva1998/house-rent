@@ -1,0 +1,7 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import CalendarSyncManager from '../../components/admin/CalendarSyncManager.tsx';
+---
+<AdminLayout title="Sincronização iCal">
+  <CalendarSyncManager client:load />
+</AdminLayout>
