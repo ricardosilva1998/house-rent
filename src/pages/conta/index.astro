@@ -49,9 +49,10 @@ const past = await db
         ) : (
           <ul class="text-sm space-y-2">
             {upcoming.map((b) => (
-              <li class="flex justify-between">
+              <li class="flex justify-between items-center gap-2">
                 <span>{b.checkIn} → {b.checkOut}</span>
-                <span class="font-mono text-stone-500">{b.confirmationCode}</span>
+                <span class="ml-auto font-mono text-stone-500">{b.confirmationCode}</span>
+                <a href={`/api/bookings/${b.id}/voucher`} target="_blank" rel="noopener" class="text-xs underline text-stone-700">PDF</a>
               </li>
             ))}
           </ul>

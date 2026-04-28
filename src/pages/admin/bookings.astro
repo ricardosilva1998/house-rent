@@ -1,0 +1,7 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import BookingsManager from '../../components/admin/BookingsManager.tsx';
+---
+<AdminLayout title="Reservas">
+  <BookingsManager client:load />
+</AdminLayout>

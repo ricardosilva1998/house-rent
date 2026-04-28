@@ -1,14 +1,63 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
+import BookingFlow from '../components/islands/BookingFlow.tsx';
 import { createT, type Locale, pathInLocale } from '../i18n/use-translation';
+import { getDefaultProperty } from '../lib/property';
 
 const locale: Locale = (Astro.locals.locale as Locale) ?? 'pt';
 const t = createT(locale);
+const user = Astro.locals.user;
+const property = await getDefaultProperty();
+
+const labels = {
+  select_dates: t('booking.select_dates'),
+  check_in: t('booking.check_in'),
+  check_out: t('booking.check_out'),
+  guests: t('booking.guests'),
+  total: t('booking.total'),
+  confirm: t('booking.confirm'),
+  no_dates: t('booking.no_dates'),
+  unavailable: t('booking.unavailable'),
+  login_required: t('auth.login_title') + ' →',
+  email_not_verified: t('errors.email_not_verified'),
+  cta_login: t('nav.login'),
+  special_requests:
+    locale === 'en' ? 'Notes (optional)' : locale === 'es' ? 'Notas (opcional)' : 'Notas (opcional)'
+};
+
+// Plural-aware nights builder evaluated at render time and serialised for the client
+const nightsLabel = (n: number) =>
+  locale === 'en' ? (n === 1 ? '1 night' : `${n} nights`) :
+  locale === 'es' ? (n === 1 ? '1 noche' : `${n} noches`) :
+  (n === 1 ? '1 noite' : `${n} noites`);
+const minStayLabel = (n: number) =>
+  locale === 'en' ? `Minimum stay: ${n} nights` :
+  locale === 'es' ? `Estancia mínima: ${n} noches` :
+  `Estadia mínima de ${n} noites`;
+
+const labelsForClient = {
+  ...labels,
+  nights: nightsLabel,
+  min_stay: minStayLabel
+};
 ---
 <SiteLayout title={t('nav.book')}>
-  <section class="max-w-2xl mx-auto px-4 py-16 text-center">
-    <h1 class="text-2xl font-semibold mb-4">{t('booking.select_dates')}</h1>
-    <p class="text-stone-600 mb-6">Em construção · disponível em breve</p>
-    <a href={pathInLocale('/casa', locale)} class="text-stone-700 underline">← {t('nav.house')}</a>
+  <section class="max-w-5xl mx-auto px-4 py-12">
+    <h1 class="text-2xl font-semibold mb-6">
+      {property?.name ?? t('site.name')} — {t('nav.book')}
+    </h1>
+    {!property ? (
+      <p class="text-stone-600">—</p>
+    ) : (
+      <BookingFlow
+        client:load
+        loginPath={pathInLocale('/conta/login?next=/reservar', locale)}
+        accountPath={pathInLocale('/conta', locale)}
+        initialUser={user ? { id: user.id, name: user.name, emailVerified: !!user.emailVerifiedAt } : null}
+        maxGuests={property.maxGuests}
+        currency={property.currency}
+        labels={labelsForClient}
+      />
+    )}
   </section>
 </SiteLayout>
