@@ -37,16 +37,20 @@ const naked = stripLocale(path);
           ))}
         </div>
         {user ? (
-          <a href={pathInLocale('/conta', locale)} class="dateline elink">
-            {user.name.split(' ')[0]}
-          </a>
+          user.role === 'admin' ? (
+            <a href="/admin" class="numeral text-[11px] tracking-[0.18em] uppercase px-2.5 py-1 inline-flex items-center gap-2" style="background: var(--ink); color: var(--paper);">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--ember);"></span>
+              {user.name.split(' ')[0]}
+            </a>
+          ) : (
+            <a href={pathInLocale('/conta', locale)} class="dateline elink">
+              {user.name.split(' ')[0]}
+            </a>
+          )
         ) : (
           <a href={pathInLocale('/conta/login', locale)} class="dateline elink">
             {t('nav.login')}
           </a>
-        )}
-        {user?.role === 'admin' && (
-          <a href="/admin" class="numeral text-[11px] tracking-[0.18em] uppercase px-2 py-1" style="background: var(--ink); color: var(--paper);">Admin</a>
         )}
       </div>
     </div>
