@@ -11,14 +11,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.locale = localeFromUrl(context.url);
 
   const path = context.url.pathname;
-  if (path.startsWith('/admin') || path.startsWith('/api/admin')) {
+  // /admin/login is the gate itself — let it through unauthenticated
+  const isAdminAreaGate = path === '/admin/login' || path === '/api/admin/auth/login';
+  if ((path.startsWith('/admin') || path.startsWith('/api/admin')) && !isAdminAreaGate) {
     if (!session) {
-      const loginUrl = new URL('/conta/login', context.url);
+      // API endpoints get JSON 401; pages get redirected to the admin login
+      if (path.startsWith('/api/admin')) {
+        return new Response(JSON.stringify({ ok: false, error: 'unauthenticated' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      const loginUrl = new URL('/admin/login', context.url);
       loginUrl.searchParams.set('next', path);
       return context.redirect(loginUrl.toString());
     }
     if (session.user.role !== 'admin') {
-      return new Response('Forbidden', { status: 403 });
+      // Logged in but not admin — kick them to their guest account
+      if (path.startsWith('/api/admin')) {
+        return new Response(JSON.stringify({ ok: false, error: 'forbidden' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return context.redirect('/conta');
     }
   }
 

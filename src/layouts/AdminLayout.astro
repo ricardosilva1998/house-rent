@@ -48,6 +48,7 @@ const nav = [
         <div class="px-5 py-4 border-t border-stone-700/40 text-xs text-stone-400">
           <div>{user?.name}</div>
           <form method="POST" action="/api/auth/logout" class="mt-2">
+            <input type="hidden" name="redirect" value="/admin/login" />
             <button type="submit" class="underline">Sair</button>
           </form>
         </div>

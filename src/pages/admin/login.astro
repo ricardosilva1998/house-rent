@@ -1,0 +1,38 @@
+---
+import AdminAuthForm from '../../components/admin/AdminAuthForm.tsx';
+
+// If already an admin, skip the form
+if (Astro.locals.user?.role === 'admin') {
+  return Astro.redirect('/admin');
+}
+
+const next = Astro.url.searchParams.get('next') ?? undefined;
+---
+<!doctype html>
+<html lang="pt" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Admin — Retiro dos Baeta</title>
+    <link rel="stylesheet" href="/_astro/global.BysnB618.css" />
+    <style>
+      body { background: #f5f5f4; color: #1c1917; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+    </style>
+  </head>
+  <body class="h-full grid place-items-center px-4">
+    <main class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <p class="text-[10px] font-mono tracking-[0.22em] uppercase text-stone-500 mb-3">Painel administrativo</p>
+        <h1 class="text-3xl font-semibold tracking-tight text-stone-900">Retiro dos Baeta</h1>
+        <p class="text-sm text-stone-500 mt-1">Acesso restrito · gestão da casa</p>
+      </div>
+      <div class="bg-white border border-stone-200 rounded-lg shadow-sm p-6">
+        <AdminAuthForm client:load next={next} />
+      </div>
+      <p class="mt-6 text-center text-xs text-stone-500">
+        <a href="/" class="underline hover:text-stone-700">← Voltar ao site público</a>
+      </p>
+    </main>
+  </body>
+</html>
