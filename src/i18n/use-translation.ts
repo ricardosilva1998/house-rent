@@ -26,9 +26,21 @@ function getNested(obj: unknown, path: string[]): string | undefined {
 
 function format(template: string, params?: Record<string, string | number>) {
   if (!params) return template;
-  return template.replace(/\{(\w+)\}/g, (_, key) =>
+  // Tiny ICU subset: {var, plural, one {text with #} other {text with #}}.
+  // # is replaced with the value of var.
+  let out = template.replace(
+    /\{(\w+),\s*plural,\s*one\s*\{([^{}]*)\}\s*other\s*\{([^{}]*)\}\}/g,
+    (_, key, oneText, otherText) => {
+      const v = params[key];
+      const n = typeof v === 'number' ? v : Number(v);
+      const text = n === 1 ? oneText : otherText;
+      return text.replace(/#/g, String(n));
+    }
+  );
+  out = out.replace(/\{(\w+)\}/g, (_, key) =>
     params[key] !== undefined ? String(params[key]) : `{${key}}`
   );
+  return out;
 }
 
 export function createT(locale: Locale) {

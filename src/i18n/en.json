@@ -29,7 +29,9 @@
     "total": "Total",
     "confirm": "Confirm booking",
     "no_dates": "Select two dates",
-    "unavailable": "Dates unavailable"
+    "unavailable": "Dates unavailable",
+    "bedrooms": "bedrooms",
+    "beds": "beds"
   },
   "auth": {
     "email": "Email",

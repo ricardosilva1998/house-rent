@@ -29,7 +29,9 @@
     "total": "Total",
     "confirm": "Confirmar reserva",
     "no_dates": "Selecciona dos fechas",
-    "unavailable": "Fechas no disponibles"
+    "unavailable": "Fechas no disponibles",
+    "bedrooms": "habitaciones",
+    "beds": "camas"
   },
   "auth": {
     "email": "Email",
