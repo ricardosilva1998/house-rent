@@ -35,45 +35,45 @@ export default function AdminAuthForm({ next }: Props) {
     }
   }
 
-  const input = 'w-full rounded-md border border-stone-300 px-3 py-2.5 text-sm bg-white focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 focus:outline-none transition';
-
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-7">
       <label className="block">
-        <span className="block text-xs font-medium text-stone-600 uppercase tracking-wider mb-1.5">Email</span>
+        <span className="field-label">Email</span>
         <input
           type="email"
           required
           autoComplete="email"
           autoFocus
-          className={input}
+          className="field"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </label>
       <label className="block">
-        <span className="block text-xs font-medium text-stone-600 uppercase tracking-wider mb-1.5">Palavra-passe</span>
+        <span className="field-label">Palavra-passe</span>
         <input
           type="password"
           required
           minLength={8}
           autoComplete="current-password"
-          className={input}
+          className="field"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </label>
       {error && (
-        <p className="text-sm rounded-md bg-red-50 text-red-700 border border-red-200 px-3 py-2">
+        <p className="dateline" style={{ color: 'var(--ember)' }}>
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-stone-900 text-white py-2.5 text-sm font-medium hover:bg-stone-800 disabled:opacity-60 transition"
+        className="btn-primary w-full justify-center disabled:opacity-60"
+        style={{ display: 'flex' }}
       >
         {loading ? 'A iniciar sessão…' : 'Entrar no painel'}
+        <span aria-hidden="true">→</span>
       </button>
     </form>
   );
