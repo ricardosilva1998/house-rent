@@ -39,13 +39,22 @@ const addDays = (iso: string, days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
+const fmtDate = (iso: string) => {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y!.slice(2)}`;
+};
+
+const fmtDateLong = (iso: string) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
+
 export default function PricingManager() {
   const [tab, setTab] = useState<'periods' | 'suggestions' | 'targets'>('periods');
-  const input = 'rounded-md border border-stone-300 px-3 py-2 text-sm';
 
   return (
-    <div>
-      <nav className="flex gap-1 border-b border-stone-200 mb-4">
+    <div className="space-y-5">
+      <nav className="admin-card flex gap-1 p-1 w-fit">
         {([
           ['periods', 'Períodos sazonais'],
           ['suggestions', 'Sugestões IA'],
@@ -54,31 +63,42 @@ export default function PricingManager() {
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm border-b-2 -mb-px ${tab === k ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-500 hover:text-stone-900'}`}
+            className="px-4 py-2 text-sm cursor-pointer transition-colors"
+            style={
+              tab === k
+                ? { background: 'var(--ink)', color: 'var(--paper)', borderRadius: '2px', fontFamily: 'var(--font-serif)', fontWeight: 500 }
+                : { color: 'var(--ink-muted)', fontFamily: 'var(--font-serif)' }
+            }
           >
             {l}
           </button>
         ))}
       </nav>
-      {tab === 'periods' && <PeriodsTab input={input} />}
-      {tab === 'targets' && <TargetsTab input={input} />}
-      {tab === 'suggestions' && <SuggestionsTab input={input} />}
+
+      {tab === 'periods' && <PeriodsTab />}
+      {tab === 'targets' && <TargetsTab />}
+      {tab === 'suggestions' && <SuggestionsTab />}
     </div>
   );
 }
 
-function PeriodsTab({ input }: { input: string }) {
+function PeriodsTab() {
   const [periods, setPeriods] = useState<Period[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', startDate: '', endDate: '', nightlyRate: 100, weekendRate: '', minStay: 1 });
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
+    setLoading(true);
     const j = await fetch('/api/admin/pricing-periods').then((r) => r.json());
     if (j.ok) setPeriods(j.periods);
+    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
-  async function add() {
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
     try {
       await fetch('/api/admin/pricing-periods', {
@@ -92,71 +112,135 @@ function PeriodsTab({ input }: { input: string }) {
         })
       });
       setForm({ name: '', startDate: '', endDate: '', nightlyRate: 100, weekendRate: '', minStay: 1 });
+      setShowCreate(false);
       load();
     } finally { setBusy(false); }
   }
 
-  async function remove(id: string) {
-    if (!confirm('Remover período?')) return;
+  async function remove(id: string, name: string) {
+    if (!confirm(`Remover o período "${name}"?`)) return;
     await fetch(`/api/admin/pricing-periods/${id}`, { method: 'DELETE' });
     load();
   }
 
   return (
-    <div>
-      <div className="rounded-lg border border-stone-200 bg-white p-4 mb-4">
-        <h3 className="font-medium mb-3">Novo período</h3>
-        <div className="grid md:grid-cols-6 gap-2 items-end">
-          <input className={input} placeholder="Nome (ex: Alta época)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className={input} type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-          <input className={input} type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
-          <input className={input} type="number" step="0.01" placeholder="€/noite" value={form.nightlyRate} onChange={(e) => setForm({ ...form, nightlyRate: Number(e.target.value) })} />
-          <input className={input} type="number" step="0.01" placeholder="€/noite (fim-de-semana)" value={form.weekendRate} onChange={(e) => setForm({ ...form, weekendRate: e.target.value })} />
-          <div className="flex gap-2">
-            <input className={input + ' w-20'} type="number" min={1} placeholder="Mín." value={form.minStay} onChange={(e) => setForm({ ...form, minStay: Number(e.target.value) })} />
-            <button onClick={add} disabled={busy || !form.name || !form.startDate || !form.endDate} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">+ Add</button>
-          </div>
+    <div className="space-y-5">
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h2 className="admin-card-title">Períodos sazonais {loading ? '' : `· ${periods.length}`}</h2>
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-action cursor-pointer">
+            {showCreate ? 'Cancelar' : '+ Novo período'}
+          </button>
         </div>
+
+        {showCreate && (
+          <form onSubmit={add} className="p-4 grid md:grid-cols-6 gap-3" style={{ borderBottom: '1px solid var(--rule)', background: 'var(--paper)' }}>
+            <div className="md:col-span-2">
+              <label className="admin-label">Nome</label>
+              <input className="admin-input" required placeholder="Alta época" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Início</label>
+              <input className="admin-input" required type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">Fim</label>
+              <input className="admin-input" required type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+            </div>
+            <div>
+              <label className="admin-label">€ / noite</label>
+              <input className="admin-input" type="number" step="0.01" value={form.nightlyRate} onChange={(e) => setForm({ ...form, nightlyRate: Number(e.target.value) })} />
+            </div>
+            <div>
+              <label className="admin-label">Mínimo</label>
+              <input className="admin-input" type="number" min={1} value={form.minStay} onChange={(e) => setForm({ ...form, minStay: Number(e.target.value) })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="admin-label">€ / noite (fim-de-semana)</label>
+              <input className="admin-input" type="number" step="0.01" placeholder="opcional" value={form.weekendRate} onChange={(e) => setForm({ ...form, weekendRate: e.target.value })} />
+            </div>
+            <div className="md:col-span-4 flex justify-end items-end">
+              <button type="submit" disabled={busy} className="btn-action cursor-pointer" style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}>
+                {busy ? 'A guardar…' : 'Adicionar período →'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {loading ? (
+          <div className="admin-empty">A carregar…</div>
+        ) : periods.length === 0 ? (
+          <div className="admin-empty">Sem períodos sazonais. Adicione o primeiro acima.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Datas</th>
+                  <th className="right">Noite</th>
+                  <th className="right">Fim-de-semana</th>
+                  <th className="right">Mín. estadia</th>
+                  <th className="right">Acções</th>
+                </tr>
+              </thead>
+              <tbody>
+                {periods.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>{p.name}</div>
+                    </td>
+                    <td>
+                      <div className="num">{fmtDate(p.startDate)} → {fmtDate(p.endDate)}</div>
+                    </td>
+                    <td className="right num" style={{ fontWeight: 500 }}>
+                      {p.nightlyRate.toFixed(0)} <span className="meta">€</span>
+                    </td>
+                    <td className="right num">
+                      {p.weekendRate != null ? (
+                        <span style={{ color: 'var(--color-ember-700)' }}>
+                          {p.weekendRate.toFixed(0)} <span className="meta">€</span>
+                        </span>
+                      ) : <span className="meta">—</span>}
+                    </td>
+                    <td className="right num">
+                      {p.minStay} <span className="meta">noites</span>
+                    </td>
+                    <td className="right">
+                      <button onClick={() => remove(p.id, p.name)} className="btn-action btn-action-danger cursor-pointer">
+                        Remover
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <table className="w-full text-sm rounded-lg overflow-hidden bg-white border border-stone-200">
-        <thead className="text-left text-stone-500 bg-stone-50">
-          <tr>
-            <th className="px-3 py-2">Nome</th><th>Início</th><th>Fim</th><th>Noite</th><th>Fim-sem.</th><th>Mín.</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {periods.length === 0 && <tr><td colSpan={7} className="px-3 py-4 text-stone-500">—</td></tr>}
-          {periods.map((p) => (
-            <tr key={p.id} className="border-t border-stone-100">
-              <td className="px-3 py-2">{p.name}</td>
-              <td>{p.startDate}</td>
-              <td>{p.endDate}</td>
-              <td>{p.nightlyRate.toFixed(2)} €</td>
-              <td>{p.weekendRate != null ? `${p.weekendRate.toFixed(2)} €` : '—'}</td>
-              <td>{p.minStay} noites</td>
-              <td className="text-right pr-3"><button onClick={() => remove(p.id)} className="text-xs text-red-600 underline">Remover</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
 
-function TargetsTab({ input }: { input: string }) {
+function TargetsTab() {
   const [targets, setTargets] = useState<Target[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ url: '', label: '', scrapeFrequency: 'daily', selectorStrategy: 'auto', selectorRecipe: '' });
   const [busy, setBusy] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
+    setLoading(true);
     const j = await fetch('/api/admin/competitor-targets').then((r) => r.json());
     if (j.ok) setTargets(j.targets);
+    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
-  async function add() {
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
     try {
       const res = await fetch('/api/admin/competitor-targets', {
@@ -171,9 +255,11 @@ function TargetsTab({ input }: { input: string }) {
         })
       });
       const j = await res.json();
-      if (!j.ok) setFlash(j.error ?? 'erro');
-      else {
+      if (!j.ok) {
+        setFlash(j.error ?? 'erro');
+      } else {
         setForm({ url: '', label: '', scrapeFrequency: 'daily', selectorStrategy: 'auto', selectorRecipe: '' });
+        setShowCreate(false);
         load();
       }
     } finally { setBusy(false); }
@@ -207,73 +293,129 @@ function TargetsTab({ input }: { input: string }) {
     load();
   }
 
-  async function remove(id: string) {
-    if (!confirm('Remover concorrente?')) return;
-    await fetch(`/api/admin/competitor-targets/${id}`, { method: 'DELETE' });
+  async function remove(t: Target) {
+    if (!confirm(`Remover o concorrente "${t.label ?? t.url}"?`)) return;
+    await fetch(`/api/admin/competitor-targets/${t.id}`, { method: 'DELETE' });
     load();
   }
 
   return (
-    <div>
-      <div className="rounded-lg border border-stone-200 bg-white p-4 mb-4">
-        <h3 className="font-medium mb-3">Adicionar concorrente</h3>
-        <div className="grid md:grid-cols-2 gap-2">
-          <input className={input + ' md:col-span-2'} placeholder="URL (https://…)" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-          <input className={input} placeholder="Etiqueta opcional" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />
-          <select className={input} value={form.scrapeFrequency} onChange={(e) => setForm({ ...form, scrapeFrequency: e.target.value })}>
-            <option value="daily">Diário</option>
-            <option value="weekly">Semanal</option>
-          </select>
-          <select className={input} value={form.selectorStrategy} onChange={(e) => setForm({ ...form, selectorStrategy: e.target.value })}>
-            <option value="auto">Auto (JSON-LD + meta)</option>
-            <option value="manual">Manual (regex)</option>
-          </select>
-          {form.selectorStrategy === 'manual' && (
-            <textarea className={input + ' md:col-span-2'} rows={3} placeholder="regex:/€\\s?(\\d{2,4}(?:[\\.,]\\d{2})?)/g" value={form.selectorRecipe} onChange={(e) => setForm({ ...form, selectorRecipe: e.target.value })} />
-          )}
-          <div className="md:col-span-2 flex justify-between items-center gap-3">
-            <button onClick={() => runNow()} disabled={running !== null} className="text-sm underline">{running === 'all' ? '…' : 'Correr todos agora'}</button>
-            <button onClick={add} disabled={busy || !form.url} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">+ Adicionar</button>
-          </div>
+    <div className="admin-card">
+      <div className="admin-card-header">
+        <h2 className="admin-card-title">Concorrentes {loading ? '' : `· ${targets.length}`}</h2>
+        <div className="flex gap-2">
+          <button onClick={() => runNow()} disabled={running !== null} className="btn-action cursor-pointer">
+            {running === 'all' ? 'A correr…' : 'Correr todos'}
+          </button>
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-action cursor-pointer">
+            {showCreate ? 'Cancelar' : '+ Adicionar'}
+          </button>
         </div>
-        {flash && <p className="mt-2 text-xs text-stone-600">{flash}</p>}
       </div>
-      <table className="w-full text-sm rounded-lg overflow-hidden bg-white border border-stone-200">
-        <thead className="text-left text-stone-500 bg-stone-50">
-          <tr>
-            <th className="px-3 py-2">URL</th><th>Frequência</th><th>Última recolha</th><th>Estado</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {targets.length === 0 && <tr><td colSpan={5} className="px-3 py-4 text-stone-500">—</td></tr>}
-          {targets.map((t) => (
-            <tr key={t.id} className="border-t border-stone-100">
-              <td className="px-3 py-2">
-                <a href={t.url} target="_blank" rel="noopener" className="underline">{t.label ?? t.url.slice(0, 60)}</a>
-                <div className="text-xs text-stone-500 truncate max-w-md">{t.url}</div>
-              </td>
-              <td>{t.scrapeFrequency}</td>
-              <td>{t.lastScrapedAt ? new Date(t.lastScrapedAt).toLocaleString('pt-PT') : '—'}</td>
-              <td>
-                <span className={t.lastStatus === 'ok' ? 'text-emerald-700' : t.lastStatus === 'error' ? 'text-red-600' : 'text-stone-500'}>
-                  {t.lastStatus ?? '—'}
-                </span>
-                {t.lastError && <div className="text-xs text-red-600 truncate max-w-xs">{t.lastError}</div>}
-              </td>
-              <td className="text-right pr-3 space-x-2 whitespace-nowrap">
-                <button onClick={() => runNow(t.id)} disabled={running !== null} className="text-xs underline text-stone-700">{running === t.id ? '…' : 'Correr'}</button>
-                <button onClick={() => toggle(t)} className="text-xs underline text-stone-700">{t.isActive ? 'Desativar' : 'Ativar'}</button>
-                <button onClick={() => remove(t.id)} className="text-xs underline text-red-600">Remover</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      {showCreate && (
+        <form onSubmit={add} className="p-4 grid md:grid-cols-2 gap-3" style={{ borderBottom: '1px solid var(--rule)', background: 'var(--paper)' }}>
+          <div className="md:col-span-2">
+            <label className="admin-label">URL do concorrente</label>
+            <input className="admin-input" required type="url" placeholder="https://…" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+          </div>
+          <div>
+            <label className="admin-label">Etiqueta</label>
+            <input className="admin-input" placeholder="opcional" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />
+          </div>
+          <div>
+            <label className="admin-label">Frequência</label>
+            <select className="admin-select cursor-pointer" value={form.scrapeFrequency} onChange={(e) => setForm({ ...form, scrapeFrequency: e.target.value })}>
+              <option value="daily">Diário</option>
+              <option value="weekly">Semanal</option>
+            </select>
+          </div>
+          <div>
+            <label className="admin-label">Estratégia</label>
+            <select className="admin-select cursor-pointer" value={form.selectorStrategy} onChange={(e) => setForm({ ...form, selectorStrategy: e.target.value })}>
+              <option value="auto">Auto (JSON-LD + meta)</option>
+              <option value="manual">Manual (regex)</option>
+            </select>
+          </div>
+          {form.selectorStrategy === 'manual' && (
+            <div className="md:col-span-2">
+              <label className="admin-label">Receita (regex)</label>
+              <textarea className="admin-textarea" rows={3} placeholder="regex:/€\s?(\d{2,4}(?:[\.,]\d{2})?)/g" value={form.selectorRecipe} onChange={(e) => setForm({ ...form, selectorRecipe: e.target.value })} />
+            </div>
+          )}
+          <div className="md:col-span-2 flex justify-end">
+            <button type="submit" disabled={busy} className="btn-action cursor-pointer" style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}>
+              {busy ? 'A guardar…' : 'Adicionar →'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {flash && <p className="px-4 py-2 dateline" style={{ color: 'var(--ink-muted)', borderBottom: '1px solid var(--rule)' }}>{flash}</p>}
+
+      {loading ? (
+        <div className="admin-empty">A carregar…</div>
+      ) : targets.length === 0 ? (
+        <div className="admin-empty">Sem concorrentes registados.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Etiqueta / URL</th>
+                <th>Frequência</th>
+                <th>Estado</th>
+                <th>Última recolha</th>
+                <th className="right">Acções</th>
+              </tr>
+            </thead>
+            <tbody>
+              {targets.map((t) => (
+                <tr key={t.id} style={!t.isActive ? { opacity: 0.55 } : undefined}>
+                  <td>
+                    <a href={t.url} target="_blank" rel="noopener" style={{ fontWeight: 500, color: 'var(--ink)' }}>
+                      {t.label ?? new URL(t.url).hostname}
+                    </a>
+                    <div className="meta truncate" style={{ maxWidth: '36ch' }}>{t.url}</div>
+                  </td>
+                  <td>
+                    <span className="dateline" style={{ color: 'var(--ink-muted)' }}>{t.scrapeFrequency}</span>
+                  </td>
+                  <td>
+                    {t.lastStatus === 'ok' ? (
+                      <span className="chip chip-confirmed">ok</span>
+                    ) : t.lastStatus === 'error' ? (
+                      <span className="chip chip-no_show">erro</span>
+                    ) : (
+                      <span className="meta">—</span>
+                    )}
+                    {t.lastError && <div className="meta mt-1" style={{ color: 'var(--color-ember-700)', maxWidth: '32ch' }}>{t.lastError.slice(0, 80)}</div>}
+                  </td>
+                  <td className="meta">{fmtDateLong(t.lastScrapedAt ?? '')}</td>
+                  <td className="right">
+                    <div className="inline-flex gap-1.5 justify-end">
+                      <button onClick={() => runNow(t.id)} disabled={running !== null} className="btn-action cursor-pointer">
+                        {running === t.id ? '…' : 'Correr'}
+                      </button>
+                      <button onClick={() => toggle(t)} className="btn-action cursor-pointer">
+                        {t.isActive ? 'Desactivar' : 'Activar'}
+                      </button>
+                      <button onClick={() => remove(t)} className="btn-action btn-action-danger cursor-pointer">
+                        Remover
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
-function SuggestionsTab({ input }: { input: string }) {
+function SuggestionsTab() {
   const today = todayIso();
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 30));
@@ -317,64 +459,89 @@ function SuggestionsTab({ input }: { input: string }) {
   const max = useMemo(() => items.reduce((m, s) => Math.max(m, s.suggestedPrice, s.acceptedPrice ?? 0), 0) || 1, [items]);
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-3 items-end mb-4">
-        <div>
-          <label className="block text-xs text-stone-500 mb-1">De</label>
-          <input className={input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+    <div className="admin-card">
+      <div className="admin-card-header">
+        <div className="flex flex-wrap gap-3 items-end flex-1">
+          <div>
+            <label className="admin-label">De</label>
+            <input className="admin-input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div>
+            <label className="admin-label">A</label>
+            <input className="admin-input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs text-stone-500 mb-1">A</label>
-          <input className={input} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        <button onClick={suggest} disabled={running} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">{running ? '…' : 'Sugerir agora (IA)'}</button>
-        {flash && <p className="text-sm text-stone-600">{flash}</p>}
+        <button onClick={suggest} disabled={running} className="btn-action cursor-pointer" style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}>
+          {running ? 'A pensar…' : 'Sugerir agora (IA) →'}
+        </button>
       </div>
 
-      {loading ? <p className="text-sm text-stone-500">A carregar…</p> : (
-        <div className="rounded-lg border border-stone-200 bg-white overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="text-left text-stone-500 bg-stone-50">
+      {flash && <p className="px-4 py-2 dateline" style={{ color: 'var(--ink-muted)', borderBottom: '1px solid var(--rule)' }}>{flash}</p>}
+
+      {loading ? (
+        <div className="admin-empty">A carregar…</div>
+      ) : items.length === 0 ? (
+        <div className="admin-empty">Sem sugestões. Carregue em "Sugerir agora".</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <th className="px-3 py-2">Data</th>
+                <th>Data</th>
                 <th>Sugerido</th>
                 <th>Aceite</th>
                 <th>Razão</th>
-                <th></th>
+                <th className="right">Acções</th>
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 && <tr><td colSpan={5} className="px-3 py-4 text-stone-500">Sem sugestões. Carregue em "Sugerir agora".</td></tr>}
               {items.map((s) => {
                 const w = Math.round((s.suggestedPrice / max) * 100);
                 const aw = s.acceptedPrice != null ? Math.round((s.acceptedPrice / max) * 100) : 0;
                 return (
-                  <tr key={s.id} className="border-t border-stone-100">
-                    <td className="px-3 py-2 font-mono text-xs">{s.date}</td>
-                    <td className="w-48">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-stone-200 rounded h-2 flex-1"><div className="bg-stone-700 h-2 rounded" style={{ width: `${w}%` }} /></div>
-                        <span className="text-stone-700 w-12 text-right">{s.suggestedPrice.toFixed(0)} €</span>
+                  <tr key={s.id}>
+                    <td className="num">{fmtDate(s.date)}</td>
+                    <td style={{ width: 220 }}>
+                      <div className="flex items-center gap-3">
+                        <div style={{ flex: 1, height: 4, background: 'var(--rule)', borderRadius: 2 }}>
+                          <div style={{ width: `${w}%`, height: '100%', background: 'var(--ink)', borderRadius: 2 }} />
+                        </div>
+                        <span className="num" style={{ width: 56, textAlign: 'right' }}>{s.suggestedPrice.toFixed(0)} <span className="meta">€</span></span>
                       </div>
                     </td>
-                    <td className="w-48">
+                    <td style={{ width: 220 }}>
                       {s.acceptedPrice != null ? (
-                        <div className="flex items-center gap-2">
-                          <div className="bg-stone-200 rounded h-2 flex-1"><div className="bg-emerald-600 h-2 rounded" style={{ width: `${aw}%` }} /></div>
-                          <span className="text-emerald-700 w-12 text-right">{s.acceptedPrice.toFixed(0)} €</span>
+                        <div className="flex items-center gap-3">
+                          <div style={{ flex: 1, height: 4, background: 'var(--rule)', borderRadius: 2 }}>
+                            <div style={{ width: `${aw}%`, height: '100%', background: 'var(--color-sage-600)', borderRadius: 2 }} />
+                          </div>
+                          <span className="num" style={{ width: 56, textAlign: 'right', color: 'var(--color-sage-600)' }}>{s.acceptedPrice.toFixed(0)} <span className="meta">€</span></span>
                         </div>
-                      ) : <span className="text-stone-400">—</span>}
+                      ) : <span className="meta">—</span>}
                     </td>
-                    <td className="text-xs text-stone-600 max-w-md">{s.reasoning ?? ''}</td>
-                    <td className="text-right pr-3 space-x-2 whitespace-nowrap">
-                      <button onClick={() => accept(s.date, s.suggestedPrice)} className="text-xs underline text-stone-700">Usar</button>
-                      <button onClick={() => {
-                        const v = prompt('Preço (€):', s.acceptedPrice?.toString() ?? s.suggestedPrice.toString());
-                        if (v) accept(s.date, Number(v));
-                      }} className="text-xs underline text-stone-700">Override</button>
-                      {s.acceptedPrice != null && (
-                        <button onClick={() => accept(s.date, null)} className="text-xs underline text-red-600">Limpar</button>
-                      )}
+                    <td>
+                      <p className="meta" style={{ maxWidth: '50ch', color: 'var(--ink)', fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 13 }}>
+                        {s.reasoning ?? ''}
+                      </p>
+                    </td>
+                    <td className="right">
+                      <div className="inline-flex gap-1.5 justify-end">
+                        <button onClick={() => accept(s.date, s.suggestedPrice)} className="btn-action cursor-pointer">Usar</button>
+                        <button
+                          onClick={() => {
+                            const v = prompt('Preço (€):', s.acceptedPrice?.toString() ?? s.suggestedPrice.toString());
+                            if (v) accept(s.date, Number(v));
+                          }}
+                          className="btn-action cursor-pointer"
+                        >
+                          Override
+                        </button>
+                        {s.acceptedPrice != null && (
+                          <button onClick={() => accept(s.date, null)} className="btn-action btn-action-danger cursor-pointer">
+                            Limpar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
