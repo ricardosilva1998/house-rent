@@ -20,8 +20,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "start": "node ./dist/server/entry.mjs",
-    "railway:release": "tsx src/db/migrate.ts && npm run seed:amenities && npm run seed:holidays && npm run seed:placeholders",
-    "seed:placeholders": "tsx scripts/seed-placeholder-content.ts"
+    "railway:release": "tsx src/db/migrate.ts && npm run seed:amenities && npm run seed:holidays && npm run seed:placeholders && npm run seed:admin",
+    "seed:placeholders": "tsx scripts/seed-placeholder-content.ts",
+    "seed:admin": "tsx scripts/seed-admin-from-env.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
