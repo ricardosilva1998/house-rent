@@ -46,7 +46,11 @@ interface Amenity {
 
 const LOCALES: ('pt' | 'en' | 'es')[] = ['pt', 'en', 'es'];
 
-export default function PropertyEditor() {
+interface Props {
+  propertyId?: string;
+}
+
+export default function PropertyEditor({ propertyId }: Props = {}) {
   const [property, setProperty] = useState<Property | null>(null);
   const [translations, setTranslations] = useState<Record<string, Translation>>({});
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -62,35 +66,49 @@ export default function PropertyEditor() {
 
   useEffect(() => {
     (async () => {
-      const [propRes, photoRes, amenRes] = await Promise.all([
-        fetch('/api/admin/property').then((r) => r.json()),
-        fetch('/api/admin/photos').then((r) => r.json()).catch(() => ({ photos: [] })),
-        fetch('/api/admin/amenities').then((r) => r.json())
+      const propUrl = propertyId ? `/api/admin/property?id=${propertyId}` : '/api/admin/property?id=';
+      // Fall back to default if no id provided
+      const p = propertyId
+        ? await fetch(propUrl).then((r) => r.json())
+        : await fetch('/api/admin/property').then((r) => r.json()).then(async (j) => {
+            if (j.ok && j.properties && j.properties.length) {
+              const id = j.properties[0].id;
+              return fetch(`/api/admin/property?id=${id}`).then((r) => r.json());
+            }
+            return { property: null, translations: [] };
+          });
+
+      const photoQs = propertyId ? `?propertyId=${propertyId}` : '';
+      const amenityQs = propertyId ? `?propertyId=${propertyId}` : '';
+      const [photoRes, amenRes] = await Promise.all([
+        fetch(`/api/admin/photos${photoQs}`).then((r) => r.json()).catch(() => ({ photos: [] })),
+        fetch(`/api/admin/amenities${amenityQs}`).then((r) => r.json())
       ]);
-      if (propRes.property) {
-        setProperty(propRes.property);
+
+      if (p.property) {
+        setProperty(p.property);
         const trMap: Record<string, Translation> = {};
-        for (const tr of propRes.translations as Translation[]) trMap[tr.locale] = tr;
+        for (const tr of p.translations as Translation[]) trMap[tr.locale] = tr;
         for (const l of LOCALES) {
-          if (!trMap[l]) trMap[l] = { propertyId: propRes.property.id, locale: l, tagline: '', description: '' };
+          if (!trMap[l]) trMap[l] = { propertyId: p.property.id, locale: l, tagline: '', description: '' };
         }
         setTranslations(trMap);
       } else {
         setProperty({
           id: '',
           slug: '',
-          name: 'Retiro dos Baeta',
+          name: '',
           address: '',
           city: '',
           region: '',
           country: 'PT',
           lat: null,
           lng: null,
-          maxGuests: 6,
-          bedrooms: 3,
-          beds: 4,
-          bathrooms: 2,
-          basePrice: 120,
+          maxGuests: 4,
+          bedrooms: 2,
+          beds: 2,
+          bathrooms: 1,
+          basePrice: 100,
           currency: 'EUR',
           checkInTime: '15:00',
           checkOutTime: '11:00',
@@ -107,7 +125,7 @@ export default function PropertyEditor() {
       setSelectedAmenities(new Set(amenRes.selected ?? []));
       setLoading(false);
     })();
-  }, []);
+  }, [propertyId]);
 
   if (loading) return <p className="text-sm text-stone-500">A carregar…</p>;
   if (!property) return null;
@@ -120,7 +138,9 @@ export default function PropertyEditor() {
     setSaving(true);
     setFlash(null);
     try {
-      const res = await fetch('/api/admin/property', {
+      const id = propertyId ?? property.id;
+      const url = id ? `/api/admin/property?id=${id}` : '/api/admin/property';
+      const res = await fetch(url, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -144,7 +164,8 @@ export default function PropertyEditor() {
 
   async function addPhoto() {
     if (!photoUrl) return;
-    const res = await fetch('/api/admin/photos', {
+    const qs = propertyId ? `?propertyId=${propertyId}` : '';
+    const res = await fetch(`/api/admin/photos${qs}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ url: photoUrl, altText: photoAlt || undefined })
@@ -181,7 +202,8 @@ export default function PropertyEditor() {
   async function saveAmenities() {
     setSaving(true);
     try {
-      await fetch('/api/admin/amenities', {
+      const qs = propertyId ? `?propertyId=${propertyId}` : '';
+      await fetch(`/api/admin/amenities${qs}`, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ amenityIds: Array.from(selectedAmenities) })
