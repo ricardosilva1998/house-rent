@@ -4,7 +4,7 @@ const schema = z.object({
   PUBLIC_SITE_URL: z.string().url().default('http://localhost:4321'),
   DATABASE_URL: z.string().default('file:./data/dev.db'),
   DATABASE_AUTH_TOKEN: z.string().optional(),
-  SESSION_SECRET: z.string().min(16).default('dev-only-session-secret-change-me'),
+  SESSION_SECRET: z.string().min(32).default('dev-only-session-secret-change-me-padded'),
   CRON_SECRET: z.string().min(8).default('dev-only-cron-secret'),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Retiro dos Baeta <noreply@example.com>'),

@@ -71,7 +71,7 @@ export function renderVerificationEmail(opts: { name: string; verifyUrl: string;
       <h2 style="font-weight: 600;">${c.hello} ${escapeHtml(opts.name)},</h2>
       <p>${c.body}</p>
       <p style="margin: 24px 0;">
-        <a href="${opts.verifyUrl}" style="display: inline-block; padding: 12px 18px; background: #1f2937; color: white; border-radius: 6px; text-decoration: none;">
+        <a href="${escapeHtml(opts.verifyUrl)}" style="display: inline-block; padding: 12px 18px; background: #1f2937; color: white; border-radius: 6px; text-decoration: none;">
           ${c.cta}
         </a>
       </p>

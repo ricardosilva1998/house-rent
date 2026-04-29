@@ -3,6 +3,7 @@ import nodeIcal from 'node-ical';
 import { eq, ne, and, isNull, asc } from 'drizzle-orm';
 import { db } from '../db/client';
 import { bookings, properties, icalFeeds, icalBlocks } from '../db/schema';
+import { assertPublicUrl } from './net';
 
 export async function buildPropertyIcal(propertyId: string): Promise<string> {
   const property = (await db.select().from(properties).where(eq(properties.id, propertyId)).limit(1))[0];
@@ -53,6 +54,9 @@ export async function importIcalFeed(feedId: string): Promise<ImportResult> {
   const feed = (await db.select().from(icalFeeds).where(eq(icalFeeds.id, feedId)).limit(1))[0];
   if (!feed) return { feedId, status: 'error', error: 'feed_not_found' };
   try {
+    // Defence-in-depth: re-validate the stored URL before fetching in case it
+    // was inserted before the SSRF guard was added to the POST endpoint.
+    await assertPublicUrl(feed.url);
     const parsed = await nodeIcal.async.fromURL(feed.url);
     const events = Object.values(parsed).filter((e: any) => e.type === 'VEVENT') as any[];
     const seenUids = new Set<string>();

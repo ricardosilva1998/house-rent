@@ -39,7 +39,11 @@ const minStayLabel = (n: number) =>
   locale === 'es' ? `Estancia mínima: ${n} noches` :
   `Estadia mínima de ${n} noites`;
 
-const labelsForClient = { ...labels, nights: nightsLabel, min_stay: minStayLabel };
+const accountLabel =
+  locale === 'en' ? 'My account' :
+  locale === 'es' ? 'Mi cuenta' :
+  'A minha conta';
+const labelsForClient = { ...labels, nights: nightsLabel, min_stay: minStayLabel, account: accountLabel };
 ---
 <SiteLayout title={t('nav.book')}>
   <header class="pt-12 lg:pt-20 pb-12">

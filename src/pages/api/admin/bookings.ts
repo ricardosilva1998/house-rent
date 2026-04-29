@@ -8,6 +8,10 @@ import { getDefaultProperty } from '../../../lib/property';
 import { quoteRange, generateConfirmationCode } from '../../../lib/pricing';
 import { rangeNights } from '../../../lib/availability';
 
+function escapeLike(s: string): string {
+  return s.replace(/[%_\\]/g, '\\$&');
+}
+
 export const GET: APIRoute = async ({ url }) => {
   const status = url.searchParams.get('status');
   const from = url.searchParams.get('from');
@@ -19,11 +23,12 @@ export const GET: APIRoute = async ({ url }) => {
   if (from) conditions.push(gte(bookings.checkIn, from));
   if (to) conditions.push(lte(bookings.checkOut, to));
   if (search) {
+    const safeSearch = escapeLike(search);
     conditions.push(
       or(
-        like(bookings.confirmationCode, `%${search}%`),
-        like(users.email, `%${search.toLowerCase()}%`),
-        like(users.name, `%${search}%`)
+        like(bookings.confirmationCode, `%${safeSearch}%`),
+        like(users.email, `%${escapeLike(search.toLowerCase())}%`),
+        like(users.name, `%${safeSearch}%`)
       )
     );
   }
@@ -37,7 +42,8 @@ export const GET: APIRoute = async ({ url }) => {
     .from(bookings)
     .leftJoin(users, eq(users.id, bookings.userId))
     .where(conditions.length ? and(...conditions) : undefined)
-    .orderBy(bookings.checkIn);
+    .orderBy(bookings.checkIn)
+    .limit(200);
 
   return Response.json({
     ok: true,

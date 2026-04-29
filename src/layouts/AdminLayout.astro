@@ -63,22 +63,119 @@ const nav = [
         border-color: var(--ember);
         background: color-mix(in oklab, var(--ember) 14%, transparent);
       }
+      /* Mobile top bar — hidden at lg+ */
+      .admin-topbar { display: none; }
+      /* Sidebar — shown as fixed full-screen drawer on mobile when .open */
+      .admin-sidebar {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        overflow-y: auto;
+        width: 100%;
+        max-width: 280px;
+      }
+      .admin-sidebar.open { display: flex; }
+      /* Overlay behind sidebar on mobile */
+      .admin-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 49;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .admin-overlay.open { display: block; }
+      @media (max-width: 1023px) {
+        .admin-topbar { display: flex; }
+      }
+      @media (min-width: 1024px) {
+        .admin-topbar { display: none !important; }
+        .admin-sidebar {
+          display: flex !important;
+          position: static;
+          overflow-y: auto;
+          width: 256px;
+          max-width: none;
+          flex-shrink: 0;
+        }
+        .admin-overlay { display: none !important; }
+      }
+      .hamburger-btn {
+        background: transparent;
+        border: 1px solid color-mix(in oklab, white 20%, transparent);
+        border-radius: 2px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: white;
+        transition: background-color 160ms ease, border-color 160ms ease;
+        flex-shrink: 0;
+      }
+      .hamburger-btn:hover {
+        border-color: var(--ember);
+        background: color-mix(in oklab, var(--ember) 14%, transparent);
+      }
     </style>
   </head>
   <body class="admin-shell min-h-screen">
+
+    <!-- Mobile top bar (hidden at lg+) -->
+    <div class="admin-topbar sticky top-0 z-40 h-14 items-center justify-between px-4 gap-3"
+      style="background: var(--color-schist-900); border-bottom: 1px solid color-mix(in oklab, white 8%, transparent);">
+      <a href="/admin">
+        <span class="display-italic text-[18px] leading-tight" style="color: white;">Retiro dos Baeta</span>
+      </a>
+      <button
+        id="admin-menu-toggle"
+        class="hamburger-btn"
+        aria-label="Abrir menu de navegação"
+        aria-expanded="false"
+        aria-controls="admin-sidebar"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <rect y="2" width="18" height="2" rx="1" fill="currentColor"/>
+          <rect y="8" width="18" height="2" rx="1" fill="currentColor"/>
+          <rect y="14" width="18" height="2" rx="1" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Overlay (mobile only) -->
+    <div id="admin-overlay" class="admin-overlay" aria-hidden="true"></div>
+
     <div class="min-h-screen flex">
+      <!-- Sidebar -->
       <aside
-        class="w-64 shrink-0 flex flex-col"
+        id="admin-sidebar"
+        class="admin-sidebar flex-col"
         style="background: var(--color-schist-900); color: color-mix(in oklab, white 84%, var(--color-schist-900));"
       >
-        <div class="px-6 py-6" style="border-bottom: 1px solid color-mix(in oklab, white 8%, transparent);">
+        <!-- Close button — visible only on mobile inside open sidebar -->
+        <div class="lg:hidden flex items-center justify-between px-6 py-4"
+          style="border-bottom: 1px solid color-mix(in oklab, white 8%, transparent);">
+          <span class="display-italic text-[18px]" style="color: white;">Menu</span>
+          <button
+            id="admin-menu-close"
+            class="hamburger-btn"
+            aria-label="Fechar menu"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="hidden lg:block px-6 py-6" style="border-bottom: 1px solid color-mix(in oklab, white 8%, transparent);">
           <a href="/admin" class="block">
             <p class="display-italic text-[22px] leading-tight" style="color: white;">Retiro dos Baeta</p>
             <p class="serial mt-1" style="color: var(--ember);">Painel administrativo</p>
           </a>
         </div>
 
-        <nav class="flex-1 py-4">
+        <nav class="flex-1 py-4" aria-label="Navegação admin">
           {nav.map((item) => {
             const active = item.match === 'exact' ? path === item.href : path.startsWith(item.href);
             return (
@@ -116,17 +213,41 @@ const nav = [
         </div>
       </aside>
 
-      <main class="flex-1 flex flex-col">
-        <header class="h-16 flex items-center px-8" style="background: var(--paper-elevated); border-bottom: 1px solid var(--rule);">
+      <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-16 flex items-center px-6 lg:px-8" style="background: var(--paper-elevated); border-bottom: 1px solid var(--rule);">
           <div>
             <p class="serial" style="color: var(--ink-faint);">Admin</p>
             <h1 class="display-italic text-[24px] leading-none" style="color: var(--ink);">{title ?? ''}</h1>
           </div>
         </header>
-        <div class="flex-1 p-8" style="background: var(--paper);">
+        <div class="flex-1 p-4 lg:p-8" style="background: var(--paper);">
           <slot />
         </div>
       </main>
     </div>
+
+    <script>
+      const toggle = document.getElementById('admin-menu-toggle');
+      const close = document.getElementById('admin-menu-close');
+      const sidebar = document.getElementById('admin-sidebar');
+      const overlay = document.getElementById('admin-overlay');
+
+      function openMenu() {
+        sidebar?.classList.add('open');
+        overlay?.classList.add('open');
+        toggle?.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeMenu() {
+        sidebar?.classList.remove('open');
+        overlay?.classList.remove('open');
+        toggle?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+
+      toggle?.addEventListener('click', openMenu);
+      close?.addEventListener('click', closeMenu);
+      overlay?.addEventListener('click', closeMenu);
+    </script>
   </body>
 </html>

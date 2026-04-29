@@ -1,6 +1,7 @@
 import { eq, and, lt, isNotNull, isNull, or } from 'drizzle-orm';
 import { db } from '../db/client';
 import { competitorTargets, competitorSnapshots } from '../db/schema';
+import { assertPublicUrl } from '../lib/net';
 
 interface ScrapedPrice {
   date?: string;
@@ -20,14 +21,19 @@ interface ScrapeResult {
 const USER_AGENT = 'Mozilla/5.0 (compatible; RetiroDosBaeta-PriceCheck/1.0; +https://retiro-dos-baeta.example.com/about-bot)';
 
 async function fetchHtml(url: string): Promise<string> {
+  // Validate before fetching — defence-in-depth for targets already in the DB.
+  await assertPublicUrl(url);
   const res = await fetch(url, {
     headers: {
       'user-agent': USER_AGENT,
       accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'accept-language': 'pt-PT,pt;q=0.9,en;q=0.8'
     },
-    redirect: 'follow'
+    // Do not follow redirects automatically — a redirect to an internal address
+    // would bypass the assertPublicUrl check above.
+    redirect: 'manual'
   });
+  if (res.status >= 300 && res.status < 400) throw new Error(`redirect_not_followed:${res.status}`);
   if (!res.ok) throw new Error(`http_${res.status}`);
   const ct = res.headers.get('content-type') ?? '';
   if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {

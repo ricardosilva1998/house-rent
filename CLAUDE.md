@@ -116,7 +116,7 @@ Validated by `src/lib/env.ts` (Zod). All optional unless marked required for tha
 | `PUBLIC_SITE_URL` | Canonical site URL (used in emails + iCal export). |
 | `DATABASE_URL` | `file:./data/dev.db` for local; `libsql://…turso.io` for prod. |
 | `DATABASE_AUTH_TOKEN` | Turso auth token (only when using libsql://). |
-| `SESSION_SECRET` | 16+ chars; rotate to invalidate all sessions. |
+| `SESSION_SECRET` | 32+ chars (HMAC key for session tokens); rotate to invalidate all sessions. |
 | `CRON_SECRET` | Required by `/api/cron/*` (`Authorization: Bearer …`). |
 | `RESEND_API_KEY` | If unset, emails are printed to stdout (dev fallback). |
 | `EMAIL_FROM` | Verified-sender address. |
@@ -258,7 +258,7 @@ Until Turso is wired up, the prod DB is the container's ephemeral SQLite — eve
 - `emma@example.com` (Emma Wilson, GB) — 2 bookings
 - `joao@example.com` (João Pereira, PT) — 1 booking
 
-**Admin** (mock): `admin@retiro.test` / `admin1234`. Backed by Railway env vars (`ADMIN_EMAIL`/`ADMIN_NAME`/`ADMIN_PASSWORD`); rotate via `railway variables --set ADMIN_PASSWORD=…`.
+**Admin** (mock): email set via `ADMIN_EMAIL` Railway variable. Password set via `ADMIN_PASSWORD` Railway variable — do not commit a real password here; rotate via `railway variables --set ADMIN_PASSWORD=…`.
 
 Yields: 15 bookings (10 completed + 5 upcoming), ~13k EUR revenue, 86% repeat rate, 5 origin countries, 14 monthly buckets — enough to make the stats dashboard look alive.
 
@@ -301,3 +301,70 @@ Yields: 15 bookings (10 completed + 5 upcoming), ~13k EUR revenue, 86% repeat ra
 - Want to change copy that's in 3 languages? → `src/i18n/{pt,en,es}.json`.
 - Want to add a property field? → schema → migration → propagate to `/api/admin/property` PUT body validator → `PropertyEditor.tsx`.
 - Want to add a new email template? → `src/lib/email.ts` (export a `render*Email` function and call it from the API endpoint that needs it).
+
+
+## Team Activity Log
+
+This section is the shared coordination surface for the dev team (team-leader + frontend-dev + backend-dev + team-security + team-qa + team-ux + team-deployment). Every team member reads the last few entries before working and appends one entry after.
+
+Format per entry:
+
+```
+### YYYY-MM-DD HH:MM — <role>
+**Task:** <one line>
+**Files:** <comma-separated paths or "none">
+**Decisions:** <2-4 bullets the next teammate needs to know>
+**Open:** <followups, or "none">
+```
+
+### 2026-04-29 14:00 — team-ux
+**Mode:** audit
+**Task:** UX/UI audit (read-only) — public site (/, /casa, /reservar, /conta/*) + admin UI
+**Files:** none (read-only)
+**Decisions:**
+- Critical: StatsDashboard.tsx, PropertiesManager.tsx, CalendarSyncManager.tsx, and PropertyEditor.tsx use raw Tailwind utility classes with hardcoded stone/gray/white/emerald/amber/red colors instead of the project's bone/schist/ember/sage token system. All four must be ported to the existing admin utilities (admin-card, admin-table, admin-input, admin-label, btn-action).
+- The SiteHeader has no mobile hamburger/collapse: at 360px the nav links plus locale switcher plus auth control are one flat flex row that will overflow or be unreachably small. Needs a responsive collapse at md breakpoint.
+- The admin sidebar (AdminLayout.astro) is `w-64 shrink-0` with no responsive adaptation — it produces horizontal scroll on viewports below ~800px (tablet access to admin is broken). Needs a collapsible drawer or at minimum a responsive hide below lg.
+- BookingFlow calendar day cells are `aspect-square` with no minimum size floor — at 360px they will fall well below 44×44px touch targets. Needs `min-w-[44px] min-h-[44px]` or equivalent.
+**Open:** Full prioritized fix list delivered inline in Round 1 return message to team-leader.
+
+### 2026-04-29 16:45 — frontend-dev
+**Task:** Implement UX fixes from team-ux Round 1 (P0 mobile nav + admin sidebar, P1 admin token system + a11y, P2 polish)
+**Files:** src/layouts/AdminLayout.astro, src/components/SiteHeader.astro, src/components/admin/StatsDashboard.tsx, src/components/admin/PropertiesManager.tsx, src/components/admin/CalendarSyncManager.tsx, src/components/admin/PropertyEditor.tsx, src/components/islands/BookingFlow.tsx, src/pages/reservar.astro, src/pages/en/reservar.astro, src/pages/es/reservar.astro, src/pages/conta/index.astro, src/components/islands/AuthForms.tsx, src/components/SiteFooter.astro, src/styles/global.css
+**Decisions:**
+- P0: AdminLayout now has a hamburger + full-screen drawer sidebar (hidden below lg, fixed overlay with close button + backdrop click to dismiss). SiteHeader now has a hamburger + full-screen mobile menu below md, with locale switcher and auth links inside.
+- P1: All four admin components (StatsDashboard, PropertiesManager, CalendarSyncManager, PropertyEditor) fully ported to `.admin-card`, `.admin-input`, `.admin-label`, `.admin-table`, `.btn-action`, `.chip-confirmed`, token colors. BookingFlow: 44px min-height on day cells, sticky bottom CTA bar on mobile, `labels.account` for success screen, `role="alert"` on error, `<abbr>` day-of-week labels. Dates in `/conta` now formatted DD/MM/YY. `aria-label` on admin nav (P1-9) and `aria-current` on locale links (P1-10) both shipped.
+- P2: `.btn-ghost` gets `cursor:pointer` + transition. `.field:focus-visible` gets ember glow box-shadow (outline:none removed). `role="alert"` on AuthForms error/success. SiteFooter link columns wrapped in `<nav aria-label>`. `/conta` max-width corrected to 1320px.
+- Skipped P2-5, P2-6, P2-10 (nice-to-haves per brief). `any` preserved on recharts `<Pie label>` prop — recharts types are too narrow for the render prop pattern; this matches the pre-existing pattern in the file.
+**Open:** team-qa should smoke-test mobile nav at 360px (hamburger open/close, overlay tap dismiss), the sticky BookingFlow CTA bar on mobile, and the admin sidebar drawer on tablet. The `pathInLocale` unused-import warning on conta/index.astro and its locale mirrors is pre-existing (not introduced by this round).
+
+### 2026-04-29 14:30 — team-security
+**Task:** Security audit (read-only) — auth + API + cron + AI + iCal surface
+**Files:** none (read-only)
+**Decisions:**
+- CRITICAL: No rate limiting anywhere — login, register, password-reset, booking POST, cron, and AI-pricing endpoints are all unthrottled; brute-force and direct API abuse can exhaust Anthropic budget.
+- HIGH: `SESSION_SECRET` is validated by env.ts but never consumed — session tokens are stored as plain SHA-256 hashes with no HMAC keying; the secret provides zero protection today. `CRON_SECRET` comparison uses plain string equality (not timing-safe).
+- HIGH: No HTTP security headers at all (no CSP, no X-Frame-Options, no X-Content-Type-Options, no HSTS, no Referrer-Policy); site is frameable and lacks any XSS policy layer.
+- HIGH: SSRF — admin can register arbitrary URLs as iCal feeds and competitor scrape targets; both trigger server-side fetches with no allowlist or private-IP block.
+**Open:** Full prioritized fix list delivered inline in Round 1 return message to team-leader. Mock data passwords in seed-mock-data.ts are intentionally weak for demo — acceptable. argon2id params (19 MiB / t=2) meet OWASP minimums. No raw SQL injection risk found (all Drizzle parameterized).
+
+### 2026-04-29 17:30 — team-security
+**Task:** Implement security fixes (rate limit, HMAC sessions, timing-safe cron, CSP/headers, SSRF guard, SQL LIKE escape, env hardening)
+**Files:** src/lib/rate-limit.ts, src/lib/net.ts, src/lib/cron-auth.ts, src/lib/auth.ts, src/lib/env.ts, src/lib/email.ts, src/lib/ical.ts, src/middleware.ts, src/pages/api/cron/scrape-competitors.ts, src/pages/api/cron/suggest-prices.ts, src/pages/api/cron/ical-import.ts, src/pages/api/admin/ical-feeds.ts, src/pages/api/admin/competitor-targets.ts, src/pages/api/admin/users.ts, src/pages/api/admin/bookings.ts, src/pages/ical/[token].ics.ts, src/jobs/scrape-competitor.ts, scripts/seed-mock-data.ts, .env.example, CLAUDE.md
+**Decisions:**
+- ALL EXISTING SESSIONS WILL BE INVALIDATED ON DEPLOY — hashToken() now uses HMAC-SHA256(SESSION_SECRET) instead of plain SHA-256; stored hashes in the sessions and user_tokens tables will not match. Users will be silently logged out and prompted to log in again. This is intentional and expected.
+- SESSION_SECRET minimum length raised from 16 to 32 chars. If the current Railway SESSION_SECRET is shorter than 32 chars, the app will refuse to start with "Invalid environment" until it is rotated. Set via: railway variables --set SESSION_SECRET=$(openssl rand -base64 32)
+- SSRF guard (assertPublicUrl) is defence-in-depth at two layers: (1) POST validation in ical-feeds and competitor-targets before DB insert; (2) inside importIcalFeed() and fetchHtml() before the actual network call, covering URLs inserted before this fix.
+- scrape-competitor.ts redirect mode changed from 'follow' to 'manual' — the scraper now rejects 3xx redirects (returns error 'redirect_not_followed:301/302'). Legitimate competitor pages that use a redirect chain will need to be re-registered with their final URL. QA should verify the scraper still works on at least one active competitor target.
+- CSP 'unsafe-inline' for scripts is required by Astro 6 hydration islands (inline script tags). This is the accepted posture; document for follow-up when Astro ships nonce support.
+**Open:** Tests for rate-limit, SSRF, and HMAC session deferred — no test runner in repo. npm audit package CVE follow-up deferred (no high/critical found in this round). Redirect-following SSRF in scraper is now blocked entirely rather than re-validated — a more permissive approach (re-validate redirect target) is possible but adds complexity; current posture is safer.
+
+### 2026-04-29 16:50 — team-qa
+**Task:** Verification of Rounds 1+2 (UX fixes by frontend-dev + security hardening by team-security)
+**Files:** none (verification-only; no source files modified)
+**Decisions:**
+- VERDICT: YELLOW — deploy with caveats. Typecheck is green (0 errors, 0 warnings, 40 pre-existing hints — identical to prior rounds). Dev server boots cleanly with the default dev SESSION_SECRET (>=32 chars). All security controls verified correct via static review and live smoke tests: rate limiting enforces 5-req/60s on login (confirmed via curl — 6th request returns 429); CSP + X-Frame-Options + HSTS + Referrer-Policy + Permissions-Policy headers present on every response; assertPublicUrl called before nodeIcal.async.fromURL in ical.ts and before fetch() in scrape-competitor.ts; redirect:'manual' set in fetchHtml; escapeLike + .limit(200) in both admin/users.ts and admin/bookings.ts; production guard is the first line of seed-mock-data.ts; iCal export sets cache-control: private, no-store; HMAC-SHA256 hashToken uses createHmac with SESSION_SECRET; timingSafeEqual in cron-auth.ts pads to equal length correctly.
+- BLOCKER: CLAUDE.md environment table still documents SESSION_SECRET as "16+ chars" (line 119) — it is now enforced at 32+. This is documentation drift only; env.ts is correct. team-leader or backend-dev should update that table line before deploy to avoid confusing the next operator.
+- DEPLOY BLOCKER: If the Railway SESSION_SECRET variable is shorter than 32 chars the app will refuse to start (env.ts throws "Invalid environment"). Must rotate before deploy: `railway variables --set SESSION_SECRET=$(openssl rand -base64 32)`. This invalidates all live sessions — users will be logged out once on next deploy.
+- No project-level test files exist despite vitest being registered in package.json. `npm run test` exits 1 with "No test files found". This is a pre-existing gap, not a regression introduced this round.
+**Open:** (1) CLAUDE.md env table: update SESSION_SECRET docs from "16+" to "32+". (2) Browser-level verification of mobile nav hamburger, admin sidebar drawer, BookingFlow sticky CTA, and 44px touch targets was NOT performed — no browser tools were dispatched; team-ux or a manual QA pass should confirm these before a customer-facing release. (3) scrape-competitor redirect:'manual' change means any registered competitor target using HTTP-to-HTTPS redirects will now return an error — operator must re-register those targets with their final HTTPS URL. (4) vitest is registered but has 0 test files — recommend adding at minimum unit tests for rate-limit.ts, net.ts assertPublicUrl, and auth.ts hashToken as a follow-up task.

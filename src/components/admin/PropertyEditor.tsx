@@ -67,7 +67,6 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
   useEffect(() => {
     (async () => {
       const propUrl = propertyId ? `/api/admin/property?id=${propertyId}` : '/api/admin/property?id=';
-      // Fall back to default if no id provided
       const p = propertyId
         ? await fetch(propUrl).then((r) => r.json())
         : await fetch('/api/admin/property').then((r) => r.json()).then(async (j) => {
@@ -127,7 +126,7 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
     })();
   }, [propertyId]);
 
-  if (loading) return <p className="text-sm text-stone-500">A carregar…</p>;
+  if (loading) return <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>A carregar…</p>;
   if (!property) return null;
 
   const setProp = <K extends keyof Property>(k: K, v: Property[K]) =>
@@ -214,12 +213,12 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
     }
   }
 
-  const input = 'w-full rounded-md border border-stone-300 px-3 py-2 text-sm';
-  const label = 'block text-sm font-medium text-stone-700 mb-1';
+  const primaryBtnStyle = { background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' };
 
   return (
     <div className="space-y-6">
-      <nav className="flex gap-1 border-b border-stone-200">
+      {/* Tab navigation — same pattern as PricingManager */}
+      <div className="admin-card flex gap-1 p-1 w-fit">
         {([
           ['meta', 'Metadados'],
           ['photos', 'Fotos'],
@@ -229,15 +228,24 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2 text-sm border-b-2 -mb-px cursor-pointer ${tab === k ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-500 hover:text-stone-900'}`}
+            className="btn-action"
+            style={tab === k ? primaryBtnStyle : {}}
           >
             {l}
           </button>
         ))}
-      </nav>
+      </div>
 
       {flash && (
-        <p className="text-sm rounded-md bg-emerald-50 text-emerald-800 px-3 py-2 border border-emerald-200">
+        <p
+          className="text-sm px-3 py-2 border"
+          style={{
+            borderRadius: '2px',
+            background: 'color-mix(in oklab, var(--color-sage-500) 12%, var(--paper))',
+            color: 'var(--color-sage-600)',
+            borderColor: 'color-mix(in oklab, var(--color-sage-500) 25%, var(--paper))'
+          }}
+        >
           {flash}
         </p>
       )}
@@ -245,56 +253,56 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
       {tab === 'meta' && (
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className={label}>Nome</label>
-            <input className={input} value={property.name} onChange={(e) => setProp('name', e.target.value)} />
+            <label className="admin-label">Nome</label>
+            <input className="admin-input" value={property.name} onChange={(e) => setProp('name', e.target.value)} />
           </div>
           <div>
-            <label className={label}>País</label>
-            <input className={input} value={property.country} onChange={(e) => setProp('country', e.target.value)} maxLength={2} />
+            <label className="admin-label">País</label>
+            <input className="admin-input" value={property.country} onChange={(e) => setProp('country', e.target.value)} maxLength={2} />
           </div>
           <div>
-            <label className={label}>Cidade</label>
-            <input className={input} value={property.city ?? ''} onChange={(e) => setProp('city', e.target.value)} />
+            <label className="admin-label">Cidade</label>
+            <input className="admin-input" value={property.city ?? ''} onChange={(e) => setProp('city', e.target.value)} />
           </div>
           <div>
-            <label className={label}>Região</label>
-            <input className={input} value={property.region ?? ''} onChange={(e) => setProp('region', e.target.value)} />
+            <label className="admin-label">Região</label>
+            <input className="admin-input" value={property.region ?? ''} onChange={(e) => setProp('region', e.target.value)} />
           </div>
           <div className="md:col-span-2">
-            <label className={label}>Morada</label>
-            <input className={input} value={property.address ?? ''} onChange={(e) => setProp('address', e.target.value)} />
+            <label className="admin-label">Morada</label>
+            <input className="admin-input" value={property.address ?? ''} onChange={(e) => setProp('address', e.target.value)} />
           </div>
           <div>
-            <label className={label}>Hóspedes</label>
-            <input type="number" className={input} value={property.maxGuests} onChange={(e) => setProp('maxGuests', Number(e.target.value))} />
+            <label className="admin-label">Hóspedes</label>
+            <input type="number" className="admin-input" value={property.maxGuests} onChange={(e) => setProp('maxGuests', Number(e.target.value))} />
           </div>
           <div>
-            <label className={label}>Quartos</label>
-            <input type="number" className={input} value={property.bedrooms} onChange={(e) => setProp('bedrooms', Number(e.target.value))} />
+            <label className="admin-label">Quartos</label>
+            <input type="number" className="admin-input" value={property.bedrooms} onChange={(e) => setProp('bedrooms', Number(e.target.value))} />
           </div>
           <div>
-            <label className={label}>Camas</label>
-            <input type="number" className={input} value={property.beds} onChange={(e) => setProp('beds', Number(e.target.value))} />
+            <label className="admin-label">Camas</label>
+            <input type="number" className="admin-input" value={property.beds} onChange={(e) => setProp('beds', Number(e.target.value))} />
           </div>
           <div>
-            <label className={label}>WCs</label>
-            <input type="number" className={input} value={property.bathrooms} onChange={(e) => setProp('bathrooms', Number(e.target.value))} />
+            <label className="admin-label">WCs</label>
+            <input type="number" className="admin-input" value={property.bathrooms} onChange={(e) => setProp('bathrooms', Number(e.target.value))} />
           </div>
           <div>
-            <label className={label}>Preço base / noite</label>
-            <input type="number" step="0.01" className={input} value={property.basePrice} onChange={(e) => setProp('basePrice', Number(e.target.value))} />
+            <label className="admin-label">Preço base / noite</label>
+            <input type="number" step="0.01" className="admin-input" value={property.basePrice} onChange={(e) => setProp('basePrice', Number(e.target.value))} />
           </div>
           <div>
-            <label className={label}>Moeda</label>
-            <input className={input} value={property.currency} onChange={(e) => setProp('currency', e.target.value.toUpperCase())} maxLength={3} />
+            <label className="admin-label">Moeda</label>
+            <input className="admin-input" value={property.currency} onChange={(e) => setProp('currency', e.target.value.toUpperCase())} maxLength={3} />
           </div>
           <div>
-            <label className={label}>Check-in</label>
-            <input className={input} value={property.checkInTime} onChange={(e) => setProp('checkInTime', e.target.value)} />
+            <label className="admin-label">Check-in</label>
+            <input className="admin-input" value={property.checkInTime} onChange={(e) => setProp('checkInTime', e.target.value)} />
           </div>
           <div>
-            <label className={label}>Check-out</label>
-            <input className={input} value={property.checkOutTime} onChange={(e) => setProp('checkOutTime', e.target.value)} />
+            <label className="admin-label">Check-out</label>
+            <input className="admin-input" value={property.checkOutTime} onChange={(e) => setProp('checkOutTime', e.target.value)} />
           </div>
 
           <div className="md:col-span-2 mt-4">
@@ -304,15 +312,16 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                 <button
                   key={l}
                   onClick={() => setActiveLocale(l)}
-                  className={`px-3 py-1 text-xs rounded cursor-pointer ${activeLocale === l ? 'bg-stone-900 text-white' : 'bg-stone-200 text-stone-700'}`}
+                  className="btn-action"
+                  style={activeLocale === l ? primaryBtnStyle : {}}
                 >
                   {l.toUpperCase()}
                 </button>
               ))}
             </div>
-            <label className={label}>Tagline ({activeLocale})</label>
+            <label className="admin-label">Tagline ({activeLocale})</label>
             <input
-              className={input}
+              className="admin-input"
               value={translations[activeLocale]?.tagline ?? ''}
               onChange={(e) =>
                 setTranslations((m) => ({
@@ -321,9 +330,9 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                 }))
               }
             />
-            <label className={`${label} mt-3`}>Descrição ({activeLocale})</label>
+            <label className="admin-label" style={{ marginTop: '0.75rem' }}>Descrição ({activeLocale})</label>
             <textarea
-              className={input}
+              className="admin-textarea"
               rows={6}
               value={translations[activeLocale]?.description ?? ''}
               onChange={(e) =>
@@ -341,25 +350,25 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
         <div className="space-y-4">
           <div className="flex gap-2 items-end">
             <div className="flex-1">
-              <label className={label}>URL da foto</label>
-              <input className={input} value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
+              <label className="admin-label">URL da foto</label>
+              <input className="admin-input" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
             </div>
             <div className="flex-1">
-              <label className={label}>Texto alternativo</label>
-              <input className={input} value={photoAlt} onChange={(e) => setPhotoAlt(e.target.value)} />
+              <label className="admin-label">Texto alternativo</label>
+              <input className="admin-input" value={photoAlt} onChange={(e) => setPhotoAlt(e.target.value)} />
             </div>
-            <button onClick={addPhoto} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm cursor-pointer hover:bg-stone-800 transition">Adicionar</button>
+            <button onClick={addPhoto} className="btn-action" style={primaryBtnStyle}>Adicionar</button>
           </div>
           <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {photos.map((p, i) => (
-              <li key={p.id} className="rounded-md border border-stone-200 bg-white overflow-hidden">
+              <li key={p.id} className="admin-card overflow-hidden">
                 <img src={p.url} alt={p.altText ?? ''} className="w-full h-32 object-cover" />
-                <div className="p-2 text-xs text-stone-600 flex items-center justify-between">
+                <div className="p-2 text-xs flex items-center justify-between" style={{ color: 'var(--ink-muted)' }}>
                   <span>#{i + 1}</span>
                   <div className="flex gap-1">
-                    <button onClick={() => move(p.id, -1)} className="px-2 cursor-pointer hover:text-stone-900">↑</button>
-                    <button onClick={() => move(p.id, 1)} className="px-2 cursor-pointer hover:text-stone-900">↓</button>
-                    <button onClick={() => removePhoto(p.id)} className="px-2 text-red-600 cursor-pointer hover:text-red-700">✕</button>
+                    <button onClick={() => move(p.id, -1)} className="btn-action">↑</button>
+                    <button onClick={() => move(p.id, 1)} className="btn-action">↓</button>
+                    <button onClick={() => removePhoto(p.id)} className="btn-action btn-action-danger">✕</button>
                   </div>
                 </div>
               </li>
@@ -384,7 +393,8 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
                         return next;
                       })
                     }
-                    className={`w-full text-left px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors ${active ? 'bg-stone-900 text-white border-stone-900 hover:bg-stone-800' : 'bg-white border-stone-200 hover:bg-stone-50 hover:border-stone-300'}`}
+                    className="btn-action w-full text-left"
+                    style={active ? primaryBtnStyle : {}}
                   >
                     {a.label}
                   </button>
@@ -392,28 +402,25 @@ export default function PropertyEditor({ propertyId }: Props = {}) {
               );
             })}
           </ul>
-          <button onClick={saveAmenities} disabled={saving} className="mt-4 rounded-md bg-stone-900 text-white px-4 py-2 text-sm cursor-pointer hover:bg-stone-800 transition disabled:opacity-60 disabled:cursor-wait">
+          <button
+            onClick={saveAmenities}
+            disabled={saving}
+            className="btn-action mt-4"
+            style={{ ...primaryBtnStyle, opacity: saving ? 0.6 : 1 }}
+          >
             {saving ? '…' : 'Guardar comodidades'}
           </button>
         </div>
       )}
 
-      {tab === 'rules' && (
-        <div className="space-y-4">
-          <div>
-            <label className={label}>Regras da casa</label>
-            <textarea className={input} rows={6} value={property.houseRules ?? ''} onChange={(e) => setProp('houseRules', e.target.value)} />
-          </div>
-          <div>
-            <label className={label}>Política de cancelamento</label>
-            <textarea className={input} rows={4} value={property.cancellationPolicy ?? ''} onChange={(e) => setProp('cancellationPolicy', e.target.value)} />
-          </div>
-        </div>
-      )}
-
       {tab !== 'amenities' && (
-        <div className="pt-4 border-t border-stone-200">
-          <button onClick={save} disabled={saving} className="rounded-md bg-stone-900 text-white px-5 py-2 text-sm font-medium cursor-pointer hover:bg-stone-800 transition disabled:opacity-60 disabled:cursor-wait">
+        <div className="pt-4 border-t" style={{ borderColor: 'var(--rule)' }}>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="btn-action"
+            style={{ ...primaryBtnStyle, opacity: saving ? 0.6 : 1 }}
+          >
             {saving ? 'A guardar…' : 'Guardar'}
           </button>
         </div>

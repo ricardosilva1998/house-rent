@@ -15,20 +15,24 @@ const year = new Date().getFullYear();
       </div>
       <div class="md:col-span-3">
         <p class="serial mb-4">Páginas</p>
-        <ul class="space-y-2">
-          <li><a class="elink" href={pathInLocale('/', locale)}>{t('nav.home')}</a></li>
-          <li><a class="elink" href={pathInLocale('/casa', locale)}>{t('nav.house')}</a></li>
-          <li><a class="elink" href={pathInLocale('/reservar', locale)}>{t('nav.book')}</a></li>
-          <li><a class="elink" href={pathInLocale('/conta', locale)}>{t('nav.account')}</a></li>
-        </ul>
+        <nav aria-label="Páginas do site">
+          <ul class="space-y-2">
+            <li><a class="elink" href={pathInLocale('/', locale)}>{t('nav.home')}</a></li>
+            <li><a class="elink" href={pathInLocale('/casa', locale)}>{t('nav.house')}</a></li>
+            <li><a class="elink" href={pathInLocale('/reservar', locale)}>{t('nav.book')}</a></li>
+            <li><a class="elink" href={pathInLocale('/conta', locale)}>{t('nav.account')}</a></li>
+          </ul>
+        </nav>
       </div>
       <div class="md:col-span-2">
         <p class="serial mb-4">Idioma</p>
-        <ul class="space-y-2">
-          {locales.map((l) => (
-            <li><a class={`elink ${l === locale ? '' : 'opacity-60'}`} href={pathInLocale('/', l)}>{l === 'pt' ? 'Português' : l === 'en' ? 'English' : 'Español'}</a></li>
-          ))}
-        </ul>
+        <nav aria-label="Selecionar idioma">
+          <ul class="space-y-2">
+            {locales.map((l) => (
+              <li><a class={`elink ${l === locale ? '' : 'opacity-60'}`} href={pathInLocale('/', l)}>{l === 'pt' ? 'Português' : l === 'en' ? 'English' : 'Español'}</a></li>
+            ))}
+          </ul>
+        </nav>
       </div>
       <div class="md:col-span-2">
         <p class="serial mb-4">Coordenadas</p>

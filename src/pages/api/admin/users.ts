@@ -4,15 +4,24 @@ import { eq, like, or, count, desc, sql } from 'drizzle-orm';
 import { db } from '../../../db/client';
 import { users, bookings } from '../../../db/schema';
 
+const RoleParam = z.enum(['guest', 'admin']).optional();
+
+function escapeLike(s: string): string {
+  return s.replace(/[%_\\]/g, '\\$&');
+}
+
 export const GET: APIRoute = async ({ url }) => {
-  const role = url.searchParams.get('role');
+  const roleRaw = url.searchParams.get('role') ?? undefined;
+  const roleParsed = RoleParam.safeParse(roleRaw);
+  const role = roleParsed.success ? roleParsed.data : undefined;
   const search = url.searchParams.get('search');
 
   const where = [] as any[];
-  if (role) where.push(eq(users.role, role as any));
+  if (role) where.push(eq(users.role, role));
   if (search) {
+    const safeSearch = escapeLike(search);
     where.push(
-      or(like(users.email, `%${search.toLowerCase()}%`), like(users.name, `%${search}%`))
+      or(like(users.email, `%${escapeLike(search.toLowerCase())}%`), like(users.name, `%${safeSearch}%`))
     );
   }
 
@@ -28,7 +37,8 @@ export const GET: APIRoute = async ({ url }) => {
     })
     .from(users)
     .where(where.length ? (where.length === 1 ? where[0] : where.reduce((a, b) => sql`${a} AND ${b}`)) : undefined)
-    .orderBy(desc(users.createdAt));
+    .orderBy(desc(users.createdAt))
+    .limit(200);
 
   // Aggregate booking counts per user in one pass
   const bookingCounts = await db

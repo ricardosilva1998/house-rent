@@ -35,7 +35,8 @@ const addDays = (iso: string, days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-const COLORS = ['#1f2937', '#475569', '#94a3b8', '#a8a29e', '#d6d3d1', '#fbbf24'];
+// Mapped to --color-schist-900/700, --color-ember-500, --color-sage-500, --color-bone-300/200
+const COLORS = ['#1F1A14', '#3A3530', '#B5532A', '#6B7556', '#DBD2C2', '#ECE5DA'];
 
 interface Props {
   defaultFrom?: string;
@@ -57,19 +58,16 @@ export default function StatsDashboard({ defaultFrom, defaultTo }: Props) {
       .finally(() => setLoading(false));
   }, [from, to]);
 
-  const input = 'rounded-md border border-stone-300 px-3 py-2 text-sm';
-  const card = 'rounded-lg bg-white border border-stone-200 p-5';
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-3 items-end">
         <div>
-          <label className="block text-xs text-stone-500 mb-1">De</label>
-          <input className={input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <label className="admin-label">De</label>
+          <input className="admin-input" style={{ width: 'auto' }} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-stone-500 mb-1">A</label>
-          <input className={input} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <label className="admin-label">A</label>
+          <input className="admin-input" style={{ width: 'auto' }} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
         <div className="flex gap-1">
           {[
@@ -89,7 +87,7 @@ export default function StatsDashboard({ defaultFrom, defaultTo }: Props) {
                   setTo(today);
                 }
               }}
-              className="px-3 py-2 text-xs rounded-md border border-stone-300 hover:bg-stone-100"
+              className="btn-action"
             >
               {p.l}
             </button>
@@ -98,56 +96,56 @@ export default function StatsDashboard({ defaultFrom, defaultTo }: Props) {
       </div>
 
       {loading || !stats ? (
-        <p className="text-sm text-stone-500">A calcular…</p>
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>A calcular…</p>
       ) : (
         <>
           <section className="grid md:grid-cols-4 gap-4">
-            <article className={card}>
-              <p className="text-sm text-stone-500">Ocupação</p>
+            <article className="admin-card p-5">
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Ocupação</p>
               <p className="text-3xl font-semibold mt-1">{fmtPct(stats.occupancyRate)}</p>
-              <p className="text-xs text-stone-500 mt-1">{stats.bookedNights} / {stats.range.nights} noites</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{stats.bookedNights} / {stats.range.nights} noites</p>
             </article>
-            <article className={card}>
-              <p className="text-sm text-stone-500">Receita</p>
+            <article className="admin-card p-5">
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Receita</p>
               <p className="text-3xl font-semibold mt-1">{stats.revenue.toFixed(0)} €</p>
-              <p className="text-xs text-stone-500 mt-1">{stats.bookingsCount} reservas</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{stats.bookingsCount} reservas</p>
             </article>
-            <article className={card}>
-              <p className="text-sm text-stone-500">ADR (preço médio/noite)</p>
+            <article className="admin-card p-5">
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>ADR (preço médio/noite)</p>
               <p className="text-3xl font-semibold mt-1">{stats.adr.toFixed(0)} €</p>
             </article>
-            <article className={card}>
-              <p className="text-sm text-stone-500">Hóspedes que voltam</p>
+            <article className="admin-card p-5">
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Hóspedes que voltam</p>
               <p className="text-3xl font-semibold mt-1">{fmtPct(stats.repeatRate)}</p>
-              <p className="text-xs text-stone-500 mt-1">Lead time {stats.averageLeadTime}d · LOS {stats.averageLengthOfStay.toFixed(1)}n</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Lead time {stats.averageLeadTime}d · LOS {stats.averageLengthOfStay.toFixed(1)}n</p>
             </article>
           </section>
 
-          <section className={card + ' h-72'}>
+          <section className="admin-card p-5" style={{ height: '18rem' }}>
             <p className="text-sm font-medium mb-3">Receita & noites por mês</p>
             {stats.monthly.length === 0 ? (
-              <p className="text-sm text-stone-500">—</p>
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>—</p>
             ) : (
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart data={stats.monthly}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--rule)" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="bookedNights" name="Noites" fill="#1f2937" />
-                  <Bar yAxisId="right" dataKey="revenue" name="Receita (€)" fill="#a8a29e" />
+                  <Bar yAxisId="left" dataKey="bookedNights" name="Noites" fill={COLORS[0]} />
+                  <Bar yAxisId="right" dataKey="revenue" name="Receita (€)" fill={COLORS[2]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </section>
 
           <section className="grid md:grid-cols-2 gap-4">
-            <article className={card + ' h-72'}>
+            <article className="admin-card p-5" style={{ height: '18rem' }}>
               <p className="text-sm font-medium mb-3">Origem dos hóspedes</p>
               {stats.guestsByCountry.length === 0 ? (
-                <p className="text-sm text-stone-500">—</p>
+                <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>—</p>
               ) : (
                 <ResponsiveContainer width="100%" height="90%">
                   <PieChart>
@@ -168,9 +166,9 @@ export default function StatsDashboard({ defaultFrom, defaultTo }: Props) {
               )}
             </article>
 
-            <article className={card}>
+            <article className="admin-card p-5">
               <p className="text-sm font-medium mb-3">Resumo</p>
-              <ul className="text-sm space-y-1 text-stone-700">
+              <ul className="text-sm space-y-1" style={{ color: 'var(--ink-muted)' }}>
                 <li>Período: {stats.range.from} → {stats.range.to} ({stats.range.nights} noites)</li>
                 <li>Reservas: {stats.bookingsCount}</li>
                 <li>Noites ocupadas: {stats.bookedNights}</li>

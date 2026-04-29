@@ -1,10 +1,11 @@
 import { eq, and, gt } from 'drizzle-orm';
 import { hash, verify } from '@node-rs/argon2';
-import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/encoding';
-import { sha256 } from '@oslojs/crypto/sha2';
+import { encodeBase32LowerCaseNoPadding } from '@oslojs/encoding';
+import { createHmac } from 'node:crypto';
 import { db } from '../db/client';
 import { users, sessions, userTokens } from '../db/schema';
 import type { User } from '../db/schema';
+import { env } from './env';
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24; // 24 h
@@ -40,7 +41,9 @@ export function generateToken(): string {
 }
 
 export function hashToken(token: string): string {
-  return encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+  // HMAC-SHA256 keyed with SESSION_SECRET so that tokens cannot be brute-forced
+  // from the hash column alone — rotating the secret also invalidates all sessions.
+  return createHmac('sha256', env.SESSION_SECRET).update(token).digest('hex');
 }
 
 export async function createSession(userId: string, ip?: string, userAgent?: string) {
@@ -111,7 +114,8 @@ export async function consumeUserToken(
 }
 
 export function setSessionCookie(headers: Headers, token: string, expiresAt: Date) {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isSecure =
+    process.env.NODE_ENV === 'production' || env.PUBLIC_SITE_URL.startsWith('https:');
   const parts = [
     `${SESSION_COOKIE}=${token}`,
     'Path=/',
@@ -119,11 +123,13 @@ export function setSessionCookie(headers: Headers, token: string, expiresAt: Dat
     'SameSite=Lax',
     `Expires=${expiresAt.toUTCString()}`
   ];
-  if (isProd) parts.push('Secure');
+  if (isSecure) parts.push('Secure');
   headers.append('Set-Cookie', parts.join('; '));
 }
 
 export function clearSessionCookie(headers: Headers) {
+  const isSecure =
+    process.env.NODE_ENV === 'production' || env.PUBLIC_SITE_URL.startsWith('https:');
   const parts = [
     `${SESSION_COOKIE}=`,
     'Path=/',
@@ -131,7 +137,7 @@ export function clearSessionCookie(headers: Headers) {
     'SameSite=Lax',
     'Expires=Thu, 01 Jan 1970 00:00:00 GMT'
   ];
-  if (process.env.NODE_ENV === 'production') parts.push('Secure');
+  if (isSecure) parts.push('Secure');
   headers.append('Set-Cookie', parts.join('; '));
 }
 

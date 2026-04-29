@@ -4,6 +4,7 @@ import { eq, asc } from 'drizzle-orm';
 import { db } from '../../../db/client';
 import { competitorTargets } from '../../../db/schema';
 import { getDefaultProperty } from '../../../lib/property';
+import { assertPublicUrl } from '../../../lib/net';
 
 const Body = z.object({
   url: z.string().url(),
@@ -30,6 +31,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!property) return Response.json({ ok: false, error: 'no_property' }, { status: 400 });
   const parsed = Body.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return Response.json({ ok: false, error: 'invalid_input' }, { status: 400 });
+  try {
+    await assertPublicUrl(parsed.data.url);
+  } catch {
+    return Response.json({ ok: false, error: 'forbidden_url' }, { status: 422 });
+  }
   const [row] = await db
     .insert(competitorTargets)
     .values({

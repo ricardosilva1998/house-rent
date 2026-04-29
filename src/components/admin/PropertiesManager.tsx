@@ -75,52 +75,65 @@ export default function PropertiesManager() {
     load();
   }
 
-  const input = 'rounded-md border border-stone-300 px-3 py-2 text-sm';
-
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-stone-200 bg-white">
-        <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
-          <h2 className="font-medium text-stone-900">Casas ({list.length})</h2>
-          <button onClick={() => setShowCreate(!showCreate)} className="text-xs underline">
+      <section className="admin-card">
+        <div className="admin-card-header">
+          <h2 className="admin-card-title">Casas ({list.length})</h2>
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-action">
             {showCreate ? 'Cancelar' : '+ Nova casa'}
           </button>
         </div>
 
         {showCreate && (
-          <form onSubmit={create} className="px-4 py-4 grid md:grid-cols-4 gap-2 border-b border-stone-100">
-            <input required className={input} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className={input} placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-            <input className={input} placeholder="Região" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
+          <form onSubmit={create} className="px-4 py-4 grid md:grid-cols-4 gap-2 border-b" style={{ borderColor: 'var(--rule)' }}>
+            <input required className="admin-input" placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className="admin-input" placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+            <input className="admin-input" placeholder="Região" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
             <div className="flex gap-2">
-              <input className={input + ' w-20'} placeholder="País" value={form.country} maxLength={2} onChange={(e) => setForm({ ...form, country: e.target.value.toUpperCase() })} />
-              <button type="submit" disabled={creating} className="rounded-md bg-stone-900 text-white px-4 py-2 text-sm">{creating ? '…' : 'Criar'}</button>
+              <input className="admin-input" style={{ width: '5rem' }} placeholder="País" value={form.country} maxLength={2} onChange={(e) => setForm({ ...form, country: e.target.value.toUpperCase() })} />
+              <button
+                type="submit"
+                disabled={creating}
+                className="btn-action"
+                style={{ background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)' }}
+              >
+                {creating ? '…' : 'Criar'}
+              </button>
             </div>
           </form>
         )}
 
-        {flash && <p className="px-4 py-2 text-sm bg-amber-50 text-amber-900 border-b border-amber-100">{flash}</p>}
+        {flash && (
+          <p className="px-4 py-2 text-sm border-b" style={{ background: 'color-mix(in oklab, var(--ember) 10%, var(--paper))', color: 'var(--color-ember-700)', borderColor: 'color-mix(in oklab, var(--ember) 20%, var(--paper))' }}>
+            {flash}
+          </p>
+        )}
 
         {loading ? (
-          <p className="p-4 text-sm text-stone-500">A carregar…</p>
+          <p className="p-4 text-sm" style={{ color: 'var(--ink-muted)' }}>A carregar…</p>
         ) : list.length === 0 ? (
-          <p className="p-4 text-sm text-stone-500">Sem casas. Crie a primeira acima.</p>
+          <p className="p-4 text-sm" style={{ color: 'var(--ink-muted)' }}>Sem casas. Crie a primeira acima.</p>
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y" style={{ borderColor: 'var(--rule)' }}>
             {list.map((p) => (
-              <li key={p.id} className={`px-4 py-3 flex items-center justify-between ${activeId === p.id ? 'bg-stone-50' : ''}`}>
+              <li
+                key={p.id}
+                className="px-4 py-3 flex items-center justify-between"
+                style={activeId === p.id ? { background: 'color-mix(in oklab, var(--ink) 4%, var(--paper))' } : {}}
+              >
                 <button onClick={() => setActiveId(p.id)} className="flex-1 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-stone-900">{p.name}</span>
-                    {p.isDefault && <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-emerald-100 text-emerald-800 rounded">Pública</span>}
-                    {activeId === p.id && <span className="text-stone-400 text-xs">· em edição</span>}
+                    <span className="font-medium" style={{ color: 'var(--ink)' }}>{p.name}</span>
+                    {p.isDefault && <span className="chip chip-confirmed">Pública</span>}
+                    {activeId === p.id && <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>· em edição</span>}
                   </div>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
                     {[p.city, p.region, p.country].filter(Boolean).join(' · ')} · {p.basePrice.toFixed(0)} {p.currency}
                   </p>
                 </button>
                 {!p.isDefault && (
-                  <button onClick={() => remove(p.id)} className="text-xs text-red-600 underline ml-3">Remover</button>
+                  <button onClick={() => remove(p.id)} className="btn-action btn-action-danger ml-3">Remover</button>
                 )}
               </li>
             ))}
@@ -130,7 +143,9 @@ export default function PropertiesManager() {
 
       {activeId && (
         <section>
-          <p className="text-xs uppercase tracking-wider text-stone-500 mb-3">A editar: {list.find((p) => p.id === activeId)?.name}</p>
+          <p className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--ink-muted)' }}>
+            A editar: {list.find((p) => p.id === activeId)?.name}
+          </p>
           <PropertyEditor key={activeId} propertyId={activeId} />
         </section>
       )}

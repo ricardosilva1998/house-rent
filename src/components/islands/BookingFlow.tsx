@@ -15,6 +15,7 @@ interface Labels {
   email_not_verified: string;
   cta_login: string;
   special_requests: string;
+  account: string;
 }
 
 type InitialUser = {
@@ -189,13 +190,21 @@ export default function BookingFlow({
           {success.confirmationCode}
         </p>
         <a href={accountPath} className="mt-10 inline-flex items-center gap-3 btn-ghost">
-          {accountPath} <span aria-hidden="true">→</span>
+          {labels.account} <span aria-hidden="true">→</span>
         </a>
       </div>
     );
   }
 
-  const dayNames = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+  const dayNames: { abbr: string; title: string }[] = [
+    { abbr: 'S', title: 'Segunda-feira' },
+    { abbr: 'T', title: 'Terça-feira' },
+    { abbr: 'Q', title: 'Quarta-feira' },
+    { abbr: 'Q', title: 'Quinta-feira' },
+    { abbr: 'S', title: 'Sexta-feira' },
+    { abbr: 'S', title: 'Sábado' },
+    { abbr: 'D', title: 'Domingo' },
+  ];
 
   return (
     <div className="grid lg:grid-cols-12 gap-x-10 gap-y-12">
@@ -229,7 +238,9 @@ export default function BookingFlow({
 
         <div className="grid grid-cols-7 gap-1">
           {dayNames.map((d, i) => (
-            <div key={i} className="text-center serial py-2" style={{ color: 'var(--ink-faint)' }}>{d}</div>
+            <div key={i} className="text-center serial py-2" style={{ color: 'var(--ink-faint)' }}>
+              <abbr title={d.title} style={{ textDecoration: 'none' }}>{d.abbr}</abbr>
+            </div>
           ))}
           {days.map(({ date, thisMonth }) => {
             const isTaken = taken.has(date);
@@ -243,7 +254,7 @@ export default function BookingFlow({
                 key={date}
                 onClick={() => selectDay(date)}
                 disabled={disabled}
-                className="aspect-square text-[15px] relative transition-all"
+                className="aspect-square min-h-[44px] text-[15px] relative transition-all"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontVariationSettings: '"opsz" 36, "SOFT" 30, "wght" 380',
@@ -371,7 +382,7 @@ export default function BookingFlow({
                     <p className="dateline mt-3" style={{ color: 'var(--ember)' }}>{labels.min_stay(quote.minStay)}</p>
                   )}
                   {error && (
-                    <p className="dateline mt-3" style={{ color: 'var(--ember)' }}>
+                    <p role="alert" className="dateline mt-3" style={{ color: 'var(--ember)' }}>
                       {error === 'dates_taken' ? labels.unavailable : error}
                     </p>
                   )}
@@ -389,6 +400,30 @@ export default function BookingFlow({
           )}
         </div>
       </aside>
+
+      {/* Sticky bottom CTA bar — visible only below lg when dates + quote are ready */}
+      {initialUser && initialUser.emailVerified && checkIn && checkOut && quote && (
+        <div
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-4 px-5 py-4"
+          style={{ background: 'var(--paper-elevated)', borderTop: '1px solid var(--rule)', boxShadow: '0 -4px 20px rgba(31,26,20,0.10)' }}
+        >
+          <div>
+            <p className="display text-[28px] leading-none" style={{ color: 'var(--ink)' }}>
+              <span className="numeral">{quote.total.toFixed(0)}</span>
+              <span className="text-[12px] dateline ml-1">{currency}</span>
+            </p>
+            <p className="dateline" style={{ color: 'var(--ink-muted)' }}>{labels.nights(quote.nightly.length)}</p>
+          </div>
+          <button
+            onClick={submitBooking}
+            disabled={submitting || !quote.available || quote.minStay > quote.nightly.length}
+            className="btn-primary disabled:opacity-50"
+            style={{ display: 'inline-flex' }}
+          >
+            {submitting ? '…' : labels.confirm} <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { eq, asc } from 'drizzle-orm';
 import { db } from '../../../db/client';
 import { icalFeeds } from '../../../db/schema';
 import { getDefaultProperty } from '../../../lib/property';
+import { assertPublicUrl } from '../../../lib/net';
 
 const Body = z.object({
   name: z.string().min(1).max(80),
@@ -26,6 +27,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!property) return Response.json({ ok: false, error: 'no_property' }, { status: 400 });
   const parsed = Body.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return Response.json({ ok: false, error: 'invalid_input' }, { status: 400 });
+  try {
+    await assertPublicUrl(parsed.data.url);
+  } catch (err) {
+    return Response.json({ ok: false, error: 'forbidden_url' }, { status: 422 });
+  }
   const [row] = await db
     .insert(icalFeeds)
     .values({ propertyId: property.id, name: parsed.data.name, url: parsed.data.url })

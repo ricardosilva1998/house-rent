@@ -131,8 +131,8 @@ export default function AuthForms({ mode, next, initialToken, labels }: Props) {
           <input required className="field" value={token} onChange={(e) => setToken(e.target.value)} />
         </label>
       )}
-      {error && <p className="dateline" style={{ color: 'var(--ember)' }}>{error}</p>}
-      {done && <p className="dateline" style={{ color: 'var(--sage)' }}>{done}</p>}
+      {error && <p role="alert" className="dateline" style={{ color: 'var(--ember)' }}>{error}</p>}
+      {done && <p role="alert" className="dateline" style={{ color: 'var(--sage)' }}>{done}</p>}
       <button
         type="submit"
         disabled={loading}

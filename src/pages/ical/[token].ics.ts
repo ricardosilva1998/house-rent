@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ params }) => {
   return new Response(ics, {
     headers: {
       'content-type': 'text/calendar; charset=utf-8',
-      'cache-control': 'public, max-age=300'
+      'cache-control': 'private, no-store'
     }
   });
 };

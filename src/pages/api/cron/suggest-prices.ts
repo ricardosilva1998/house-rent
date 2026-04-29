@@ -1,17 +1,12 @@
 import type { APIRoute } from 'astro';
-import { env } from '../../../lib/env';
 import { getDefaultProperty } from '../../../lib/property';
 import { suggestPricesForRange } from '../../../jobs/suggest-prices';
+import { verifyCronAuth } from '../../../lib/cron-auth';
 
 export const prerender = false;
 
-function authorized(request: Request): boolean {
-  const header = request.headers.get('authorization') ?? '';
-  return header === `Bearer ${env.CRON_SECRET}`;
-}
-
 export const POST: APIRoute = async ({ request, url }) => {
-  if (!authorized(request)) return new Response('Unauthorized', { status: 401 });
+  if (!verifyCronAuth(request)) return new Response('Unauthorized', { status: 401 });
   const property = await getDefaultProperty();
   if (!property) return Response.json({ ok: false, error: 'no_property' }, { status: 400 });
   const today = new Date().toISOString().slice(0, 10);

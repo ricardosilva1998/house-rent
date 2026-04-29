@@ -1,3 +1,6 @@
+// Guard: mock data must never run in production — it creates fake guests and bookings.
+if (process.env.NODE_ENV === 'production') process.exit(0);
+
 import { eq, count } from 'drizzle-orm';
 import { db, client } from '../src/db/client';
 import { users, bookings, pricingPeriods, properties } from '../src/db/schema';

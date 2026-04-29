@@ -211,6 +211,8 @@ header, main, footer { position: relative; z-index: 2; }
   color: var(--ink);
   padding: 14px 26px;
   border: 1px solid var(--ink);
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 .btn-ghost:hover { background: var(--ink); color: var(--paper); }
 
@@ -224,10 +226,14 @@ header, main, footer { position: relative; z-index: 2; }
   font-family: var(--font-serif);
   font-size: 16px;
   color: var(--ink);
-  outline: none;
   transition: border-color 200ms ease;
 }
 .field:focus { border-color: var(--ink); }
+.field:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ember) 18%, transparent);
+}
 .field-label {
   font-family: var(--font-mono);
   font-size: 11px;
