@@ -387,3 +387,14 @@ Format per entry:
 - Healthcheck PASS: `/health` returns `{"ok":true,"status":"healthy"}` (HTTP 200). Service started on port 8080; migrations, all seeds, and mock data ran without errors.
 - All six security headers confirmed present on live origin (verified via `curl -v`): `content-security-policy`, `x-frame-options: DENY`, `x-content-type-options: nosniff`, `referrer-policy: strict-origin-when-cross-origin`, `permissions-policy: camera=(), microphone=(), geolocation=()`, `strict-transport-security: max-age=63072000; includeSubDomains`. Rounds 1-3 code (security hardening + UX fixes, commits 7f4dfb4 + 0538217) is now live in production.
 **Open:** (1) All existing user sessions were invalidated on this deploy (HMAC hashToken migration — expected, benign); monitor for user-facing login complaints in the next 24-48h. (2) CLAUDE.md env table still documents SESSION_SECRET as "16+" — team-qa flagged this as documentation drift; update to "32+" in next round. (3) Browser-level UX verification (mobile nav hamburger, admin sidebar drawer, BookingFlow sticky CTA, 44px touch targets) still pending — team-ux or manual QA pass required before customer-facing release. (4) Competitor scrape targets using HTTP-to-HTTPS redirects will now error (redirect:'manual' change) — operator must re-register those with their final HTTPS URLs.
+
+### 2026-05-01 00:00 — team-security
+**Task:** Focused audit — verify HMAC sessions, Anthropic key exposure, LLM sandbox, scrape rate limits; fix identified gaps
+**Files:** src/middleware.ts, src/pages/api/cron/suggest-prices.ts, src/pages/admin/settings.astro
+**Decisions:**
+- HMAC sessions confirmed correct: hashToken() uses createHmac with SESSION_SECRET; cookie flags HttpOnly+SameSite=Lax+Secure(prod) all present; no leaks in client bundles.
+- Anthropic API key not leaked: server-side only via Zod env module; settings.astro boolean check never exposes the value. Replaced import.meta.env.* with env.* to prevent accidental inlining if page is ever prerendered.
+- LLM user payload is sandboxed: only admin-editable DB fields flow into Claude messages — no guest input reaches the LLM.
+- Added rate limits for /api/admin/run-scrape (2/10min/IP) and /api/admin/run-ical-import (5/min/IP); previously only run-suggest was throttled.
+- Clamped ?days= in /api/cron/suggest-prices to 1–90 (was unbounded Number() — could produce Invalid Date before the 60-night guard fires).
+**Open:** (1) No vitest test files exist for rate-limit.ts, net.ts, auth.ts — follow-up task recommended. (2) Admin-controlled property fields flow into LLM payload — prompt injection requires admin compromise, acceptable for v1. (3) Browser UX verification still pending from prior round.
