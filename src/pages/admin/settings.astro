@@ -9,14 +9,14 @@ const ical = env.PUBLIC_SITE_URL;
     <section class="rounded-lg border border-stone-200 bg-white p-5">
       <h2 class="font-medium mb-3">Email transaccional</h2>
       <p class="text-sm text-stone-600">Configure <code class="px-1 bg-stone-100 rounded">RESEND_API_KEY</code> e <code class="px-1 bg-stone-100 rounded">EMAIL_FROM</code> no Railway. Em modo de desenvolvimento, os emails são impressos no terminal.</p>
-      <p class="text-sm text-stone-500 mt-2">Estado: <strong>{import.meta.env.RESEND_API_KEY ? 'configurado' : 'apenas console (dev)'}</strong></p>
+      <p class="text-sm text-stone-500 mt-2">Estado: <strong>{env.RESEND_API_KEY ? 'configurado' : 'apenas console (dev)'}</strong></p>
     </section>
 
     <section class="rounded-lg border border-stone-200 bg-white p-5">
       <h2 class="font-medium mb-3">Inteligência de preços (IA)</h2>
-      <p class="text-sm text-stone-600">Modelo: <code class="px-1 bg-stone-100 rounded">{import.meta.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001'}</code></p>
-      <p class="text-sm text-stone-500 mt-2">Orçamento mensal: {import.meta.env.AI_PRICING_MONTHLY_BUDGET_EUR ?? '5'} EUR</p>
-      <p class="text-sm text-stone-500">Estado: <strong>{import.meta.env.ANTHROPIC_API_KEY ? 'activo' : 'sem chave'}</strong></p>
+      <p class="text-sm text-stone-600">Modelo: <code class="px-1 bg-stone-100 rounded">{env.ANTHROPIC_MODEL}</code></p>
+      <p class="text-sm text-stone-500 mt-2">Orçamento mensal: {env.AI_PRICING_MONTHLY_BUDGET_EUR} EUR</p>
+      <p class="text-sm text-stone-500">Estado: <strong>{env.ANTHROPIC_API_KEY ? 'activo' : 'sem chave'}</strong></p>
     </section>
 
     <section class="rounded-lg border border-stone-200 bg-white p-5 lg:col-span-2">

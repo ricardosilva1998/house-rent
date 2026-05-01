@@ -15,6 +15,8 @@ const RATE_LIMITS: Array<[string, number, number, 'ip' | 'auto']> = [
   ['/api/auth/request-password-reset', 3,   60_000,  'ip'],
   ['/api/bookings',                    10,  60_000,  'auto'],
   ['/api/admin/run-suggest',           1,  600_000,  'ip'],
+  ['/api/admin/run-scrape',            2,  600_000,  'ip'],
+  ['/api/admin/run-ical-import',       5,   60_000,  'ip'],
 ];
 
 // ---------------------------------------------------------------------------
